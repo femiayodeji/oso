@@ -107,7 +107,9 @@ export function TaskFeed({ task, onCompleted }: Props) {
     }
   };
 
-  const onLayout = (e: LayoutChangeEvent) => setHeight(Math.floor(e.nativeEvent.layout.height));
+  // Keep the exact height. Paging snaps by the real viewport, so a rounded page height
+  // drifts a fraction of a pixel per card and adds up to a visible offset.
+  const onLayout = (e: LayoutChangeEvent) => setHeight(e.nativeEvent.layout.height);
 
   useEffect(
     () => () => {

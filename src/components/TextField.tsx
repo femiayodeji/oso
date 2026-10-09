@@ -7,7 +7,7 @@ import { AppText, ErrorText } from './AppText';
 interface Props extends TextInputProps {
   label?: string;
   error?: string | null;
-  // Accent border, used only to point at the API key field on first run.
+  // Stronger border (text colour, not accent), used only to point at the API key field on first run.
   highlight?: boolean;
   ref?: Ref<TextInput>;
 }
@@ -29,7 +29,7 @@ export function TextField({ label, error, highlight, style, multiline, ref, ...r
           {
             color: colors.text,
             backgroundColor: colors.surface,
-            borderColor: highlight ? colors.accent : colors.border,
+            borderColor: highlight ? colors.text : colors.border,
             borderRadius: radius.sm,
             paddingHorizontal: spacing.lg,
           },

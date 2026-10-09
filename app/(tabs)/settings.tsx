@@ -1,6 +1,3 @@
-import { useEffect } from 'react';
-import { AppState } from 'react-native';
-
 import { AppText } from '../../src/components/AppText';
 import { Button } from '../../src/components/Button';
 import { Chips } from '../../src/components/Chips';
@@ -46,13 +43,8 @@ export default function SettingsScreen() {
   const { settings, update } = useSettings();
   const { data, loading, error, reload } = useFocusLoad(loadSettingsScreen);
 
-  // Coming back from the system settings app may have changed the permission.
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active') void reload();
-    });
-    return () => sub.remove();
-  }, [reload]);
+  // useFocusLoad also reloads when the app returns to the foreground, which picks up a
+  // permission changed in the system settings app.
 
   if (!data) {
     return <Screen>{loading ? <LoadingLine /> : <ErrorLine text={error ?? 'Could not load settings.'} />}</Screen>;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { getCard, reviewCard, setCardFlagged } from '../../db/cards';
 import { todayLocal } from '../../lib/dates';
@@ -30,6 +30,10 @@ export function CardPage({ card, review, height, position, onReplace }: Props) {
   const [rewriting, setRewriting] = useState(false);
   const [reviewed, setReviewed] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Height of the body viewport and of its content; the body scrolls only when the content is taller.
+  const [bodyHeight, setBodyHeight] = useState(0);
+  const [contentHeight, setContentHeight] = useState(0);
+  const overflows = bodyHeight > 0 && contentHeight > bodyHeight + 1;
   const recall = card.type === 'recall';
 
   const reveal = () => {
@@ -48,13 +52,17 @@ export function CardPage({ card, review, height, position, onReplace }: Props) {
     setFlagOpen(false);
     setRewriting(true);
     setError(null);
+    let flagSaved = false;
     try {
       await setCardFlagged(card.id, true);
+      flagSaved = true;
       await regenerateCard(card.id, note || undefined);
       const fresh = await getCard(card.id);
       if (fresh) onReplace(fresh);
       setRevealed(false);
     } catch (e) {
+      // The row stays flagged when the rewrite fails, so the icon has to say so too.
+      if (flagSaved) onReplace({ ...card, flagged: true });
       if (isNoKeyError(e)) goToSettings();
       else setError(describeLlmError(e));
     } finally {
@@ -88,21 +96,34 @@ export function CardPage({ card, review, height, position, onReplace }: Props) {
       {rewriting ? <AppText variant="caption">rewriting…</AppText> : null}
       <ErrorText>{error}</ErrorText>
 
-      <Pressable
-        style={[styles.body, { gap: spacing.xl }]}
-        disabled={!recall || revealed}
-        onPress={reveal}
-        accessibilityRole={recall && !revealed ? 'button' : undefined}
-        accessibilityHint={recall && !revealed ? 'Reveals the answer' : undefined}
+      {/* Scrolling is off while the text fits, so the swipe goes straight to the pager. */}
+      <ScrollView
+        style={styles.body}
+        contentContainerStyle={styles.bodyContent}
+        scrollEnabled={overflows}
+        nestedScrollEnabled
+        bounces={false}
+        overScrollMode="never"
+        keyboardShouldPersistTaps="handled"
+        onLayout={(e) => setBodyHeight(e.nativeEvent.layout.height)}
+        onContentSizeChange={(_, h) => setContentHeight(h)}
       >
-        <AppText variant="card">{card.front}</AppText>
-        {recall && !revealed ? <AppText variant="caption">Tap to reveal</AppText> : null}
-        {recall && revealed ? (
-          <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.xl }}>
-            <AppText variant="card">{card.back ?? ''}</AppText>
-          </View>
-        ) : null}
-      </Pressable>
+        <Pressable
+          style={[styles.bodyContent, { gap: spacing.xl }]}
+          disabled={!recall || revealed}
+          onPress={reveal}
+          accessibilityRole={recall && !revealed ? 'button' : undefined}
+          accessibilityHint={recall && !revealed ? 'Reveals the answer' : undefined}
+        >
+          <AppText variant="card">{card.front}</AppText>
+          {recall && !revealed ? <AppText variant="caption">Tap to reveal</AppText> : null}
+          {recall && revealed ? (
+            <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.xl }}>
+              <AppText variant="card">{card.back ?? ''}</AppText>
+            </View>
+          ) : null}
+        </Pressable>
+      </ScrollView>
 
       {review && revealed && !reviewed ? (
         <View style={[styles.actions, { gap: spacing.md }]}>
@@ -119,7 +140,8 @@ export function CardPage({ card, review, height, position, onReplace }: Props) {
 
 const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
-  body: { flex: 1, justifyContent: 'center', overflow: 'hidden' },
+  body: { flex: 1 },
+  bodyContent: { flexGrow: 1, justifyContent: 'center' },
   actions: { flexDirection: 'row' },
   action: { flex: 1 },
 });

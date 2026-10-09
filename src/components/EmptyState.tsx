@@ -11,6 +11,9 @@ interface Props {
   text: string;
   buttonLabel?: string;
   onPress?: () => void;
+  // An optional quiet second action (text only), e.g. reviewing due cards.
+  secondaryLabel?: string;
+  onSecondaryPress?: () => void;
   // The quiet "day done" checkmark, one of the few places accent is allowed.
   done?: boolean;
   error?: string | null;
@@ -18,7 +21,17 @@ interface Props {
 }
 
 // One mascot, one line of text, one button.
-export function EmptyState({ mascot, text, buttonLabel, onPress, done, error, size = 140 }: Props) {
+export function EmptyState({
+  mascot,
+  text,
+  buttonLabel,
+  onPress,
+  secondaryLabel,
+  onSecondaryPress,
+  done,
+  error,
+  size = 140,
+}: Props) {
   const { colors, spacing } = useTheme();
   return (
     <View style={[styles.wrap, { padding: spacing.xl, gap: spacing.lg }]}>
@@ -31,6 +44,9 @@ export function EmptyState({ mascot, text, buttonLabel, onPress, done, error, si
       </View>
       <ErrorText center>{error}</ErrorText>
       {buttonLabel && onPress ? <Button label={buttonLabel} onPress={onPress} /> : null}
+      {secondaryLabel && onSecondaryPress ? (
+        <Button label={secondaryLabel} variant="quiet" onPress={onSecondaryPress} />
+      ) : null}
     </View>
   );
 }

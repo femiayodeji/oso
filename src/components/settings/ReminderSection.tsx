@@ -1,6 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 
-import { openSystemSettings, requestPermission, syncReminders } from '../../notifications';
+import { openSystemSettings, requestPermission, syncReminders, type ReminderPermission } from '../../notifications';
 import { useSettings } from '../../settings/SettingsContext';
 import { useTheme } from '../../theme';
 import type { AppSettings } from '../../types';
@@ -10,10 +10,8 @@ import { Mascot } from '../Mascot';
 import { Section } from './Section';
 import { TimeStepper } from './TimeStepper';
 
-export type Permission = 'granted' | 'denied' | 'undetermined';
-
 interface Props {
-  permission: Permission | null;
+  permission: ReminderPermission | null;
   onPermissionChanged: () => void;
 }
 
@@ -43,7 +41,15 @@ export function ReminderSection({ permission, onPermissionChanged }: Props) {
         <View style={[styles.banner, { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.md }]}>
           <Mascot state="reminder" size={72} />
           <View style={[styles.fill, { gap: spacing.sm }]}>
-            <AppText variant="bodyStrong">Reminders are off.</AppText>
+            {permission === 'denied' ? (
+              <AppText variant="bodyStrong">Reminders are off.</AppText>
+            ) : (
+              // Not asked yet: say what the system prompt is for before showing it.
+              <AppText variant="body">
+                Oso can remind you to read each evening. Reminders are scheduled on this device only; nothing is sent
+                anywhere.
+              </AppText>
+            )}
             <Button label="Enable reminders" onPress={() => void enable()} />
           </View>
         </View>

@@ -55,5 +55,3 @@ export function Mascot({ state, size = 140, style }: MascotProps) {
     />
   );
 }
-
-export default Mascot;

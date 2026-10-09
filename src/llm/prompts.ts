@@ -198,3 +198,8 @@ export const CHAT_FALLBACKS = {
   planNotReady: 'I can set your plan as soon as the chapters are ready. Ask me again in a moment.',
   empty: 'Sorry, I did not catch that. Could you ask again?',
 };
+
+// The message sent for a quick-reply chip in chat. `days` counts from now.
+export function planQuickReply(days: number): string {
+  return `Finish this in ${days} ${days === 1 ? 'day' : 'days'}`;
+}

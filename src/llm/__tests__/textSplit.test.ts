@@ -105,3 +105,27 @@ describe('buildUploadedOutline', () => {
     expect(buildUploadedOutline(text, 600).map((c) => c.title)).toEqual(expect.arrayContaining(['Part 1', 'Part 2']));
   });
 });
+
+describe('condenseText', () => {
+  const { condenseText } = jest.requireActual<typeof import('../textSplit')>('../textSplit');
+
+  it('leaves short text alone', () => {
+    expect(condenseText('one\n\ntwo', 100)).toBe('one\n\ntwo');
+  });
+
+  it('keeps whole paragraphs from the start and end and marks the gap', () => {
+    const paragraphs = Array.from({ length: 20 }, (_, i) => `Paragraph ${i} ${'x'.repeat(80)}`);
+    const out = condenseText(paragraphs.join('\n\n'), 600);
+    expect(out.length).toBeLessThanOrEqual(600 + 20);
+    expect(out.startsWith(paragraphs[0])).toBe(true);
+    expect(out.endsWith(paragraphs[19])).toBe(true);
+    expect(out).toContain('[...]');
+    expect(out).not.toContain('Paragraph 10 ');
+  });
+
+  it('cuts a single huge paragraph', () => {
+    const out = condenseText('a'.repeat(5000), 1000);
+    expect(out.length).toBeLessThan(1100);
+    expect(out).toContain('[...]');
+  });
+});

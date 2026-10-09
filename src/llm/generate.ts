@@ -2,9 +2,10 @@ import type { NewCard } from '../db/cards';
 import type { Book, Card, Chapter } from '../types';
 import { readBookText } from './bookText';
 import { completeJson } from './client';
+import { LlmError } from './errors';
 import { cardRewritePrompt, chapterPrompt, outlinePrompt } from './prompts';
 import { chapterContentSchema, outlineSchema, rewrittenCardSchema, type GeneratedCard } from './schemas';
-import { buildUploadedOutline } from './textSplit';
+import { buildUploadedOutline, condenseText } from './textSplit';
 
 // About 15k tokens of source per call: fits every current model with room for the reply.
 export const MAX_CHAPTER_CHARS = 60_000;
@@ -55,8 +56,29 @@ export async function generateChapterContent(
   chapter: Chapter,
   outline: Pick<Chapter, 'idx' | 'title'>[],
 ): Promise<{ summary: string; cards: NewCard[] }> {
-  const content = await completeJson(chapterPrompt({ book, chapter, outline }), chapterContentSchema);
-  return { summary: content.summary, cards: toNewCards(content.cards) };
+  let source = chapter.sourceText;
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const content = await completeJson(
+        chapterPrompt({ book, chapter: { ...chapter, sourceText: source }, outline }),
+        chapterContentSchema,
+      );
+      return { summary: content.summary, cards: toNewCards(content.cards) };
+    } catch (e) {
+      // Some providers accept far less than MAX_CHAPTER_CHARS per request. Halve the
+      // chapter text and try again rather than failing the whole book on one chapter.
+      if (!isTooLarge(e) || !source || source.length < MIN_CONDENSED_CHARS || attempt >= MAX_CONDENSE_TRIES) throw e;
+      source = condenseText(source, Math.floor(source.length / 2));
+    }
+  }
+}
+
+const MAX_CONDENSE_TRIES = 3;
+const MIN_CONDENSED_CHARS = 4_000;
+
+function isTooLarge(e: unknown): boolean {
+  if (!(e instanceof LlmError) || e.kind !== 'bad_request') return false;
+  return e.status === 413 || /too large|too long|context length|maximum context|too many tokens/i.test(e.message);
 }
 
 export async function rewriteCard(

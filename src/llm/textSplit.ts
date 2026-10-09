@@ -116,3 +116,30 @@ export function buildUploadedOutline(text: string, maxChars: number): DetectedCh
     }));
   });
 }
+
+// Shortens a chapter that a provider refused as too large: keeps whole paragraphs from
+// the start and the end (where a chapter is set up and resolved) and drops the middle.
+export function condenseText(text: string, maxChars: number): string {
+  if (text.length <= maxChars) return text;
+  const paragraphs = text.split(/\n{2,}/);
+  const headBudget = Math.floor(maxChars * 0.6);
+  const tailBudget = maxChars - headBudget;
+  const head: string[] = [];
+  let used = 0;
+  let i = 0;
+  for (; i < paragraphs.length && used + paragraphs[i].length <= headBudget; i++) {
+    head.push(paragraphs[i]);
+    used += paragraphs[i].length + 2;
+  }
+  const tail: string[] = [];
+  used = 0;
+  for (let j = paragraphs.length - 1; j >= i && used + paragraphs[j].length <= tailBudget; j--) {
+    tail.unshift(paragraphs[j]);
+    used += paragraphs[j].length + 2;
+  }
+  // One giant paragraph: fall back to a plain cut.
+  if (head.length === 0 && tail.length === 0) {
+    return `${text.slice(0, headBudget)}\n\n[...]\n\n${text.slice(text.length - tailBudget)}`;
+  }
+  return [...head, '[...]', ...tail].join('\n\n');
+}

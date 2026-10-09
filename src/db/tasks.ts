@@ -1,9 +1,9 @@
 import { nowIso } from '../lib/dates';
 import type { BookStatus, Task } from '../types';
-import { getDb, withTransaction, write } from './index';
+import { getDb, withTransaction } from './index';
 import { initialReview } from './leitner';
 
-export type TaskWithBook = Task & { bookTitle: string; cardCount: number; totalTasks: number };
+export type TaskWithBook = Task & { bookTitle: string };
 
 interface TaskRow {
   id: number;
@@ -15,8 +15,6 @@ interface TaskRow {
 
 interface TaskWithBookRow extends TaskRow {
   book_title: string;
-  card_count: number;
-  total_tasks: number;
 }
 
 function toTask(row: TaskRow): Task {
@@ -48,9 +46,7 @@ export async function getTask(id: number): Promise<Task | null> {
 export async function listNextTasks(): Promise<TaskWithBook[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<TaskWithBookRow>(
-    `SELECT t.*, b.title AS book_title,
-       (SELECT COUNT(*) FROM cards c WHERE c.task_id = t.id) AS card_count,
-       (SELECT COUNT(*) FROM tasks a WHERE a.book_id = t.book_id) AS total_tasks
+    `SELECT t.*, b.title AS book_title
      FROM tasks t
      JOIN books b ON b.id = t.book_id
      WHERE b.status = 'ready'
@@ -62,25 +58,7 @@ export async function listNextTasks(): Promise<TaskWithBook[]> {
      ORDER BY b.created_at, b.id`,
     [],
   );
-  return rows.map((row) => ({
-    ...toTask(row),
-    bookTitle: row.book_title,
-    cardCount: row.card_count,
-    totalTasks: row.total_tasks,
-  }));
-}
-
-export async function listUpcomingTasks(bookId: number): Promise<Task[]> {
-  const db = await getDb();
-  const rows = await db.getAllAsync<TaskRow>(
-    'SELECT * FROM tasks WHERE book_id = ? AND completed_at IS NULL ORDER BY idx, id',
-    [bookId],
-  );
-  return rows.map(toTask);
-}
-
-export async function deleteTasksForBook(bookId: number): Promise<void> {
-  await write('DELETE FROM tasks WHERE book_id = ?', [bookId]);
+  return rows.map((row) => ({ ...toTask(row), bookTitle: row.book_title }));
 }
 
 // One transaction. Completing an already-completed task writes nothing, so the day's

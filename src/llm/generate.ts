@@ -53,7 +53,7 @@ export function toNewCards(cards: GeneratedCard[]): NewCard[] {
 export async function generateChapterContent(
   book: Book,
   chapter: Chapter,
-  outline: Chapter[],
+  outline: Pick<Chapter, 'idx' | 'title'>[],
 ): Promise<{ summary: string; cards: NewCard[] }> {
   const content = await completeJson(chapterPrompt({ book, chapter, outline }), chapterContentSchema);
   return { summary: content.summary, cards: toNewCards(content.cards) };

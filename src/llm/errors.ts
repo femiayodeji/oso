@@ -5,7 +5,11 @@ export type LlmErrorKind =
   | 'network'
   | 'timeout'
   | 'server'
+  | 'bad_request'
   | 'bad_response';
+
+// Where a rejected request (wrong model name, wrong base URL) gets fixed.
+export const CHECK_SETTINGS = 'Check the model name and base URL in Settings.';
 
 const DEFAULT_MESSAGES: Record<LlmErrorKind, string> = {
   no_key: 'Add an API key in Settings to continue.',
@@ -14,6 +18,7 @@ const DEFAULT_MESSAGES: Record<LlmErrorKind, string> = {
   network: 'No connection. Check your internet and try again.',
   timeout: 'The request took too long. Try again.',
   server: 'The provider had a problem. Try again later.',
+  bad_request: `The provider rejected the request. ${CHECK_SETTINGS}`,
   bad_response: 'The model returned an unusable answer. Try again.',
 };
 
@@ -28,10 +33,6 @@ export class LlmError extends Error {
     this.kind = kind;
     this.status = status;
   }
-}
-
-export function isLlmError(e: unknown): e is LlmError {
-  return e instanceof LlmError;
 }
 
 export function isNoKeyError(e: unknown): boolean {

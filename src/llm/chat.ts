@@ -1,6 +1,6 @@
 import { getBook } from '../db/books';
 import { listCardsForBook } from '../db/cards';
-import { listChapters } from '../db/chapters';
+import { listChapterHeads } from '../db/chapters';
 import { addChatMessage, listChatMessages } from '../db/chat';
 import { listTasks } from '../db/tasks';
 import { applyPlan } from '../plan/applyPlan';
@@ -10,9 +10,9 @@ import { complete, type LlmMessage } from './client';
 import { LlmError } from './errors';
 import { CHAT_FALLBACKS, chatSystemPrompt } from './prompts';
 
-export { parseChatReply } from './chatReply';
-
-export type ChatAction = { type: 'set_plan'; days: number; taskCount: number };
+// `days` is the number of days remaining that the reader asked for. `taskCount` is the
+// book's total number of tasks afterwards, `completedCount` of which were already done.
+export type ChatAction = { type: 'set_plan'; days: number; taskCount: number; completedCount: number };
 
 const HISTORY_LIMIT = 12;
 
@@ -31,12 +31,13 @@ export async function sendChatMessage(
   if (!book) throw new LlmError('bad_response', 'This book no longer exists.');
 
   const [chapters, cards, tasks, previous] = await Promise.all([
-    listChapters(bookId),
+    listChapterHeads(bookId),
     listCardsForBook(bookId),
     listTasks(bookId),
     listChatMessages(bookId, HISTORY_LIMIT),
   ]);
-  const cardsReady = cards.length > 0 && book.status !== 'generating';
+  // A failed or half-prepared book has cards too, but its content is incomplete.
+  const cardsReady = cards.length > 0 && (book.status === 'ready' || book.status === 'finished');
   await addChatMessage(bookId, 'user', text);
 
   const raw = await complete({
@@ -56,8 +57,8 @@ export async function sendChatMessage(
   let action: ChatAction | undefined;
 
   if (parsed.action && cardsReady) {
-    const { taskCount } = await applyPlan(bookId, parsed.action.days);
-    action = { type: 'set_plan', days: parsed.action.days, taskCount };
+    const { taskCount, completedCount } = await applyPlan(bookId, parsed.action.days);
+    action = { type: 'set_plan', days: parsed.action.days, taskCount, completedCount };
     reply = reply || CHAT_FALLBACKS.planSet(parsed.action.days);
   } else if (parsed.action) {
     // The model's text may claim the plan was set; it was not, so say what is true.

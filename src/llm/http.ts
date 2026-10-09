@@ -1,4 +1,4 @@
-import { LlmError } from './errors';
+import { CHECK_SETTINGS, LlmError } from './errors';
 
 export type PostJsonOptions = {
   headers: Record<string, string>;
@@ -61,11 +61,11 @@ export function mapHttpError(status: number, bodyText: string, secrets: string[]
   if (status === 401 || status === 403) return new LlmError('invalid_key', undefined, status);
   if (status === 429) return new LlmError('rate_limit', undefined, status);
   if (status >= 500) return new LlmError('server', undefined, status);
-  const detail = errorDetail(bodyText, secrets);
-  const message = detail
-    ? `The provider rejected the request (${status}): ${detail}`
-    : `The provider rejected the request (${status}). Check the model name in Settings.`;
-  return new LlmError('server', message, status);
+  // Any other 4xx (400, 404, 422...) is a request the provider will keep rejecting,
+  // usually because of a wrong model name or base URL.
+  const detail = errorDetail(bodyText, secrets).replace(/[.\s]+$/, '');
+  const rejected = `The provider rejected the request (${status})`;
+  return new LlmError('bad_request', `${rejected}${detail ? `: ${detail}` : ''}. ${CHECK_SETTINGS}`, status);
 }
 
 async function fetchOnce(

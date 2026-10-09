@@ -72,9 +72,10 @@ describe('postJson', () => {
   it('does not retry other 4xx and scrubs the key from the detail', async () => {
     fetchMock.mockResolvedValue(response(404, { error: { message: `No such model for ${KEY}` } }));
     const error = (await call().catch((e: unknown) => e)) as LlmError;
-    expect(error.kind).toBe('server');
+    expect(error.kind).toBe('bad_request');
     expect(error.status).toBe(404);
     expect(error.message).toContain('No such model');
+    expect(error.message).toMatch(/model name and base URL in Settings/);
     expect(error.message).not.toContain(KEY);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -121,6 +122,17 @@ describe('helpers', () => {
     expect(mapHttpError(429, '').kind).toBe('rate_limit');
     expect(mapHttpError(529, '').kind).toBe('server');
     expect(mapHttpError(400, 'not json').message).toContain('400');
+  });
+
+  it('gives a rejected request its own kind and points at Settings', () => {
+    for (const status of [400, 404, 422]) expect(mapHttpError(status, '').kind).toBe('bad_request');
+    expect(mapHttpError(404, '').message).toBe(
+      'The provider rejected the request (404). Check the model name and base URL in Settings.',
+    );
+    expect(mapHttpError(400, JSON.stringify({ error: { message: 'Unknown model: gpt-9.' } })).message).toBe(
+      'The provider rejected the request (400): Unknown model: gpt-9. Check the model name and base URL in Settings.',
+    );
+    expect(new LlmError('bad_request').message).toMatch(/Settings/);
   });
 
   it('describes errors without leaking internals', () => {

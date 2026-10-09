@@ -161,12 +161,13 @@ function chapterNotes(chapters: ChatContext['chapters']): string {
 
 function planState(ctx: ChatContext): string {
   if (!ctx.cardsReady) {
-    return 'The chapters are still being prepared, so a plan cannot be set yet. If the reader asks for one, tell them it can be set as soon as the chapters are ready, and do not emit the action.';
+    return 'The chapters are not fully prepared, so a plan cannot be set yet. If the reader asks for one, tell them it can be set as soon as the chapters are ready, and do not emit the action.';
   }
   if (ctx.book.planDays === null) {
     return `No plan is set yet. ${ctx.cardCount} cards are ready. Help the reader pick how many days they want to finish the book in.`;
   }
-  return `Current plan: ${ctx.book.planDays} days, ${ctx.tasksCompleted} of ${ctx.tasksTotal} daily tasks completed. Completed tasks never change; a new plan only reshuffles what is left.`;
+  const left = Math.max(0, ctx.tasksTotal - ctx.tasksCompleted);
+  return `Current plan: ${ctx.book.planDays} days in total. ${ctx.tasksCompleted} of ${ctx.tasksTotal} daily tasks are completed, so ${left} ${left === 1 ? 'day is' : 'days are'} left. Completed tasks never change; a new plan only spreads the unread part of the book over the days the reader asks for.`;
 }
 
 export function chatSystemPrompt(ctx: ChatContext): string {
@@ -186,7 +187,7 @@ ${planState(ctx)}
 
 The app, not you, changes the plan. When the reader states or changes how many days they want to finish the book in (a bare number answering that question counts), end your reply with this JSON object alone on the last line, with the number of days filled in:
 {"action":"set_plan","days":5}
-"days" must be a whole number from 1 to ${MAX_PLAN_DAYS}. Emit the object only when the reader has clearly asked to set or change the plan in their latest message. Never emit it for questions about the book, and never more than once. Do not mention the JSON or describe it; just confirm the plan in a short sentence before it.
+"days" is the number of days from now that the reader wants to take to finish what is left of the book. It is never the total length of the plan, so do not add the days already completed to it. "days" must be a whole number from 1 to ${MAX_PLAN_DAYS}. Emit the object only when the reader has clearly asked to set or change the plan in their latest message. Never emit it for questions about the book, and never more than once. Do not mention the JSON or describe it; just confirm the plan in a short sentence before it.
 
 Chapter notes
 ${chapterNotes(ctx.chapters)}`;

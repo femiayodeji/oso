@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { splitIntoTasks, type PlanCard } from '../splitPlan';
+import { planRemaining, planWithinTotal, splitIntoTasks, type PlanCard } from '../splitPlan';
 
 // `perChapter[i]` cards in chapter i, ids counting up from 1 in reading order.
 function makeCards(perChapter: number[]): PlanCard[] {
@@ -86,5 +86,64 @@ describe('splitIntoTasks', () => {
         expect(task.cardIds.length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe('planRemaining', () => {
+  it('spreads the remaining cards over the days asked for, however many tasks are done', () => {
+    const plan = planRemaining(makeCards([6, 6]), 5, 3);
+    expect(sizes(plan.tasks)).toEqual([4, 4, 4]);
+    expect(plan.planDays).toBe(8);
+  });
+
+  it('is a plain split when nothing is completed yet', () => {
+    const cards = makeCards([5, 5]);
+    const plan = planRemaining(cards, 0, 5);
+    expect(plan.planDays).toBe(5);
+    expect(plan.tasks).toEqual(splitIntoTasks(cards, 5));
+  });
+
+  it('keeps every remaining card exactly once, in order', () => {
+    const cards = makeCards([4, 7, 2]);
+    expect(flat(planRemaining(cards, 2, 4).tasks)).toEqual(cards.map((c) => c.id));
+  });
+
+  it('counts the days asked for even when there are fewer cards than days', () => {
+    const plan = planRemaining(makeCards([2]), 3, 5);
+    expect(sizes(plan.tasks)).toEqual([1, 1]);
+    expect(plan.planDays).toBe(8);
+  });
+
+  it('treats bad day counts as one day', () => {
+    for (const days of [0, -2, Number.NaN]) {
+      const plan = planRemaining(makeCards([6]), 2, days);
+      expect(plan.tasks).toHaveLength(1);
+      expect(plan.planDays).toBe(3);
+    }
+    expect(planRemaining(makeCards([6]), 2, 2.9).planDays).toBe(4);
+  });
+
+  it('makes no tasks when no cards are left', () => {
+    expect(planRemaining([], 4, 3)).toEqual({ planDays: 7, tasks: [] });
+  });
+});
+
+describe('planWithinTotal', () => {
+  it('fits the remaining cards into what is left of a fixed total', () => {
+    const plan = planWithinTotal(makeCards([6, 6]), 2, 5);
+    expect(plan.planDays).toBe(5);
+    expect(sizes(plan.tasks)).toEqual([4, 4, 4]);
+  });
+
+  it('equals the total when nothing is completed', () => {
+    const plan = planWithinTotal(makeCards([10]), 0, 4);
+    expect(plan.planDays).toBe(4);
+    expect(plan.tasks).toHaveLength(4);
+  });
+
+  it('adds one more day when the total is already used up', () => {
+    const plan = planWithinTotal(makeCards([4]), 5, 5);
+    expect(sizes(plan.tasks)).toEqual([4]);
+    expect(plan.planDays).toBe(6);
   });
 });

@@ -1,9 +1,9 @@
 import * as DocumentPicker from 'expo-document-picker';
 
 import { getBook, listBooks } from '../../db/books';
-import { getChapterProgress, listChapters } from '../../db/chapters';
+import { getChapterProgress, listChapterHeads, type ChapterHead } from '../../db/chapters';
 import { listTasks } from '../../db/tasks';
-import type { Book, BookStatus, Chapter, Task } from '../../types';
+import type { Book, BookStatus, Task } from '../../types';
 
 export interface BookSummary {
   book: Book;
@@ -13,7 +13,7 @@ export interface BookSummary {
 }
 
 export interface BookDetail extends BookSummary {
-  chapterList: Chapter[];
+  chapterList: ChapterHead[];
   tasks: Task[];
 }
 
@@ -36,7 +36,7 @@ export async function loadBooks(): Promise<BookSummary[]> {
 export async function loadBookDetail(id: number): Promise<BookDetail | null> {
   const book = await getBook(id);
   if (!book) return null;
-  const [summary, chapterList] = await Promise.all([summarize(book), listChapters(id)]);
+  const [summary, chapterList] = await Promise.all([summarize(book), listChapterHeads(id)]);
   return { ...summary, chapterList };
 }
 

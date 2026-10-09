@@ -43,6 +43,19 @@ export async function savePastedText(text: string): Promise<string> {
   return file.uri;
 }
 
+// Removes a file this module stored, when its book is deleted or its file is replaced.
+// Best effort: a file that is already gone, or lives outside the books folder, is left alone.
+export function deleteBookFile(uri: string | null): void {
+  if (!uri) return;
+  try {
+    if (!uri.startsWith(booksDirectory().uri)) return;
+    const file = new File(uri);
+    if (file.exists) file.delete();
+  } catch {
+    // A leftover file costs disk space only.
+  }
+}
+
 async function readEpub(file: File): Promise<string> {
   const zip = await JSZip.loadAsync(await file.bytes());
   const container = await zip.file('META-INF/container.xml')?.async('string');

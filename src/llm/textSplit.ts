@@ -3,7 +3,8 @@
 export type DetectedChapter = { title: string; text: string };
 
 const NUMBER_WORDS =
-  'one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty';
+  'one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|' +
+  'twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred';
 const KEYWORD_RE = new RegExp(`^(chapter|part|book|section)\\s+(\\d+|[ivxlcdm]+|${NUMBER_WORDS})\\b`, 'i');
 const STANDALONE_RE = /^(prologue|epilogue|introduction|preface|foreword|afterword|conclusion|appendix(\s+[a-z0-9]+)?)[.:]?$/i;
 const MARKDOWN_RE = /^(#{1,3})\s+(.+?)\s*#*$/;

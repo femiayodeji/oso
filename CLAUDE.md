@@ -17,7 +17,7 @@ Personal-use mobile app that turns a book into a scrollable feed of summaries an
 - Navigation: `expo-router`
 - Database: `expo-sqlite`
 - Secrets: `expo-secure-store` (API key only)
-- Files: `expo-file-system`, `expo-document-picker` (optional book upload: epub, txt, pasted text)
+- Files: `expo-file-system`, `expo-document-picker` (optional book upload: pdf, epub, txt, pasted text)
 - Notifications: `expo-notifications` (local scheduled notifications only)
 - Validation: `zod` (validate every LLM JSON response)
 - Tests: `jest` (pure logic only)

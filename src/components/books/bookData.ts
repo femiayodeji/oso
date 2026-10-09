@@ -56,19 +56,19 @@ export interface PickedFile {
   name: string;
 }
 
-const BOOK_FILE = /\.(epub|txt|md|markdown)$/i;
+const BOOK_FILE = /\.(pdf|epub|txt|md|markdown)$/i;
 
 // Returns null when the user cancels. Throws a readable error for unsupported files.
 export async function pickBookFile(): Promise<PickedFile | null> {
   const result = await DocumentPicker.getDocumentAsync({
     // Markdown has no reliable MIME type on Android, so the extension is checked below.
-    type: ['application/epub+zip', 'text/*', 'application/octet-stream'],
+    type: ['application/pdf', 'application/epub+zip', 'text/*', 'application/octet-stream'],
     copyToCacheDirectory: true,
     multiple: false,
   });
   if (result.canceled) return null;
   const asset = result.assets[0];
   if (!asset) return null;
-  if (!BOOK_FILE.test(asset.name)) throw new Error('Pick an .epub, .txt or .md file.');
+  if (!BOOK_FILE.test(asset.name)) throw new Error('Pick a .pdf, .epub, .txt or .md file.');
   return { uri: asset.uri, name: asset.name };
 }

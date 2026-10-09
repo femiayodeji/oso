@@ -2,11 +2,13 @@ import { Directory, File, Paths } from 'expo-file-system';
 import JSZip from 'jszip';
 
 import { htmlToText, parseContainerRootfile, parseOpfSpine } from './epub';
+import { joinPdfPages, openPdf } from './pdf';
 
 export { buildUploadedOutline, chunkBySize, detectChapters } from './textSplit';
 
 const BOOKS_DIR = 'books';
-const SUPPORTED = ['txt', 'md', 'epub'];
+const SUPPORTED = ['txt', 'md', 'epub', 'pdf'];
+const PDF_PAGES_PER_TICK = 4;
 
 function booksDirectory(): Directory {
   const dir = new Directory(Paths.document, BOOKS_DIR);
@@ -30,7 +32,7 @@ export async function importBookFile(uri: string, name: string): Promise<string>
   const dir = booksDirectory();
   if (uri.startsWith(dir.uri)) return uri;
   const ext = extensionOf(name) || extensionOf(uri) || 'txt';
-  if (!SUPPORTED.includes(ext)) throw new Error('Unsupported file type. Use .txt, .md, or .epub.');
+  if (!SUPPORTED.includes(ext)) throw new Error('Unsupported file type. Use .pdf, .epub, .txt, or .md.');
   const dest = new File(dir, `${Date.now()}-${safeName(name)}.${ext}`);
   await new File(uri).copy(dest);
   return dest.uri;
@@ -72,8 +74,22 @@ async function readEpub(file: File): Promise<string> {
   return sections.join('\n\n');
 }
 
+// Parsing runs on the JS thread, so it pauses every few pages to keep the UI responsive.
+async function readPdf(file: File): Promise<string> {
+  const pdf = openPdf(await file.bytes());
+  const pages: string[][] = [];
+  for (let i = 0; i < pdf.pageCount; i++) {
+    pages.push(pdf.pageParagraphs(i));
+    if (i % PDF_PAGES_PER_TICK === PDF_PAGES_PER_TICK - 1) await new Promise<void>((resolve) => setTimeout(resolve, 0));
+  }
+  return joinPdfPages(pages);
+}
+
 export async function readBookText(uri: string): Promise<string> {
   const file = new File(uri);
   if (!file.exists) throw new Error('The book file is missing.');
-  return extensionOf(uri) === 'epub' ? readEpub(file) : file.text();
+  const ext = extensionOf(uri);
+  if (ext === 'epub') return readEpub(file);
+  if (ext === 'pdf') return readPdf(file);
+  return file.text();
 }

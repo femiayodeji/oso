@@ -129,3 +129,24 @@ describe('condenseText', () => {
     expect(out).toContain('[...]');
   });
 });
+
+describe('qualifyRepeatedTitles', () => {
+  const { qualifyRepeatedTitles } = jest.requireActual<typeof import('../textSplit')>('../textSplit');
+  const titles = (list: string[]) => qualifyRepeatedTitles(list.map((title) => ({ title, text: 'x' }))).map((c) => c.title);
+
+  it('prefixes repeated chapter titles with their part', () => {
+    expect(titles(['PROLOGUE', 'PART ONE', 'CHAPTER ONE', 'CHAPTER TWO', 'PART TWO', 'CHAPTER ONE'])).toEqual([
+      'PROLOGUE',
+      'PART ONE',
+      'PART ONE, CHAPTER ONE',
+      'CHAPTER TWO',
+      'PART TWO',
+      'PART TWO, CHAPTER ONE',
+    ]);
+  });
+
+  it('leaves unique titles and part-less repeats alone', () => {
+    expect(titles(['Chapter 1', 'Chapter 2'])).toEqual(['Chapter 1', 'Chapter 2']);
+    expect(titles(['Interlude', 'Interlude'])).toEqual(['Interlude', 'Interlude']);
+  });
+});

@@ -101,10 +101,28 @@ export function chunkBySize(text: string, maxChars: number): string[] {
   return chunks;
 }
 
+const PART_RE = /^(part|book)\s/i;
+
+// Books that restart chapter numbering in every part give several chapters the same
+// title. Those get their part in front ("PART TWO, CHAPTER ONE") so they can be told apart.
+export function qualifyRepeatedTitles(chapters: DetectedChapter[]): DetectedChapter[] {
+  const counts = new Map<string, number>();
+  for (const c of chapters) counts.set(c.title.toLowerCase(), (counts.get(c.title.toLowerCase()) ?? 0) + 1);
+  let part: string | null = null;
+  return chapters.map((chapter) => {
+    if (PART_RE.test(chapter.title)) {
+      part = chapter.title;
+      return chapter;
+    }
+    const repeated = (counts.get(chapter.title.toLowerCase()) ?? 0) > 1;
+    return repeated && part ? { ...chapter, title: `${part}, ${chapter.title}` } : chapter;
+  });
+}
+
 // Chapter rows for an uploaded book: detected chapters, with any chapter too large
 // for one model call split into numbered parts.
 export function buildUploadedOutline(text: string, maxChars: number): DetectedChapter[] {
-  return detectChapters(text).flatMap((chapter) => {
+  return qualifyRepeatedTitles(detectChapters(text)).flatMap((chapter) => {
     if (chapter.text.length <= maxChars) return [chapter];
     const parts = chunkBySize(chapter.text, maxChars);
     return parts.map((part, i) => ({

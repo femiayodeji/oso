@@ -58,11 +58,12 @@ function errorDetail(bodyText: string, secrets: string[]): string {
 }
 
 export function mapHttpError(status: number, bodyText: string, secrets: string[] = []): LlmError {
-  if (status === 401 || status === 403) return new LlmError('invalid_key', undefined, status);
+  if (status === 401) return new LlmError('invalid_key', undefined, status);
   if (status === 429) return new LlmError('rate_limit', undefined, status);
   if (status >= 500) return new LlmError('server', undefined, status);
-  // Any other 4xx (400, 404, 422...) is a request the provider will keep rejecting,
-  // usually because of a wrong model name or base URL.
+  // Any other 4xx (400, 403, 404, 422...) is a request the provider will keep rejecting,
+  // usually because of a wrong model name or base URL. 403 belongs here too: providers
+  // send it for a model the key may not use, not for a bad key, so show their reason.
   const detail = errorDetail(bodyText, secrets).replace(/[.\s]+$/, '');
   const rejected = `The provider rejected the request (${status})`;
   return new LlmError('bad_request', `${rejected}${detail ? `: ${detail}` : ''}. ${CHECK_SETTINGS}`, status);

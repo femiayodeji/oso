@@ -34,11 +34,19 @@ describe('postJson', () => {
     expect(init.headers['content-type']).toBe('application/json');
   });
 
-  it.each([401, 403])('maps %i to invalid_key without retrying', async (status) => {
-    fetchMock.mockResolvedValue(response(status, { error: { message: `bad key ${KEY}` } }));
+  it('maps 401 to invalid_key without retrying', async () => {
+    fetchMock.mockResolvedValue(response(401, { error: { message: `bad key ${KEY}` } }));
     const error = (await call().catch((e: unknown) => e)) as LlmError;
     expect(error.kind).toBe('invalid_key');
     expect(error.message).not.toContain(KEY);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('maps 403 to bad_request and keeps the provider reason', async () => {
+    fetchMock.mockResolvedValue(response(403, { error: { message: 'This model is not available to you.' } }));
+    const error = (await call().catch((e: unknown) => e)) as LlmError;
+    expect(error.kind).toBe('bad_request');
+    expect(error.message).toContain('This model is not available to you');
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

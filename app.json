@@ -9,12 +9,16 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.femiayodeji.oso"
+      "bundleIdentifier": "com.femiayodeji.oso",
+      "icon": {
+        "light": "./assets/icon.png",
+        "dark": "./assets/icon-dark.png"
+      }
     },
     "android": {
       "package": "com.femiayodeji.oso",
       "adaptiveIcon": {
-        "backgroundColor": "#1F6B4A",
+        "backgroundColor": "#F7F1E3",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },

@@ -212,10 +212,11 @@ Define all colors once as tokens. Components never use raw hex values.
 
 ### App icon
 
-- **Primary: the "Minimal" icon** (white "O" on deep green `#1F6B4A`). It stays legible at small sizes and on any wallpaper.
-- **Dark variant:** use the panda-on-dark icon for iOS dark mode and Android themed icons if supported.
-- **Do not use the "Light" icon** (cream panda on cream tile). It washes out on light home screens.
-- Android: provide an adaptive icon (foreground plus `#1F6B4A` background) and a **monochrome** notification small icon (white-on-transparent, simple shape). Notification small icons cannot be full color.
+- **Primary: the reading panda** (panda holding the green book) on a cream tile `#F7F1E3`. It is distinctive; the plain "O" was not.
+- **Dark variant:** the same panda on a dark tile `#132122`, used for iOS dark mode (`ios.icon.dark`).
+- **Do not use the "Minimal" icon** (white "O" on green) as the app icon. The "O" survives only as the Android themed (monochrome) icon and the notification small icon, which must be single-colour shapes.
+- Android: provide an adaptive icon (panda foreground plus `#F7F1E3` background; Android has no dark adaptive icon) and a **monochrome** notification small icon (white-on-transparent, simple shape). Notification small icons cannot be full color.
+- Rebuild with `scripts/build-icons.sh [master.png]` after changing the reading panda art.
 
 ### Mascot (panda)
 
@@ -245,12 +246,12 @@ Replace art by overwriting these files; names and sizes are what the code and `a
 |---|---|---|---|
 | Mascot state | `assets/mascot/<state>.png`, `@2x`, `@3x` | 160, 320, 480 px square | Transparent. Draw a square master at 960 px (480 minimum), panda centred at the same scale in every state, then run `scripts/build-mascots.sh <folder>`. States: `reading`, `noBooks`, `generating`, `chat`, `thinking`, `happy`, `completed`, `reminder`, `error`. |
 | Panda head | `assets/mascot/pandaIcon.png`, `@2x`, `@3x` | 48, 96, 144 px square | Transparent. Master at 288 px; same script. |
-| App icon | `assets/icon.png` | 1024 px square | Opaque, full-bleed `#1F6B4A`, no rounded corners (the OS masks it). |
-| Android adaptive foreground | `assets/android-icon-foreground.png` | 1024 px square | Transparent; keep the art inside the centre 66%. Background is the colour `#1F6B4A` in `app.json`. |
+| App icon | `assets/icon.png` | 1024 px square | Reading panda on opaque, full-bleed `#F7F1E3`, no rounded corners (the OS masks it). Built by `scripts/build-icons.sh`. |
+| iOS dark icon | `assets/icon-dark.png` (`ios.icon.dark` in `app.json`) | 1024 px square | Reading panda on opaque `#132122`. Same script. |
+| Android adaptive foreground | `assets/android-icon-foreground.png` | 1024 px square | Transparent reading panda; keep the art inside the centre 66%. Background is the colour `#F7F1E3` in `app.json`. Same script. |
 | Android themed icon | `assets/android-icon-monochrome.png` | 1024 px square | White on transparent, same safe zone. |
 | Notification small icon | `assets/notification-icon.png` | 96 px square | White on transparent, simple shape. |
 | Splash | `assets/splash-icon.png` | 1024 px square (currently 400) | Transparent; shown 160 pt wide on `#F7F6F2` / `#121614`. |
-| iOS dark icon (not added yet) | `assets/icon-dark.png` + `ios.icon.dark` in `app.json` | 1024 px square | Panda on dark. |
 | Sounds | `assets/sounds/{tap,click,streak}.m4a` | short, quiet (about -30 dB mean) | AAC; `.webm` does not play on iOS. |
 
 Icon, splash and notification changes need a new native build; mascots and sounds only need a reload.

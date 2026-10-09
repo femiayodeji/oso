@@ -27,6 +27,11 @@ describe('detectChapters', () => {
     expect(detectChapters(text).map((c) => c.title)).toEqual(['Prologue', 'Chapter IV', 'Epilogue']);
   });
 
+  it('recognises spelled-out numbers past twenty', () => {
+    const text = `CHAPTER TWENTY-NINE\n\n${body('a')}\n\nCHAPTER THIRTY\n\n${body('b')}\n\nChapter Forty-Two\n\n${body('c')}`;
+    expect(detectChapters(text).map((c) => c.title)).toEqual(['CHAPTER TWENTY-NINE', 'CHAPTER THIRTY', 'Chapter Forty-Two']);
+  });
+
   it('ignores "chapter" inside a paragraph', () => {
     const text = `Chapter 1\n\n${body('one')}\nChapter 2 of this story was never written down by anyone.\n${body('more')}`;
     expect(detectChapters(text)).toHaveLength(1);

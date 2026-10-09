@@ -93,7 +93,7 @@ export default function AddBookScreen() {
             {file.name}
           </AppText>
         ) : null}
-        <Button label={file ? 'Pick a different file' : 'Pick a file (epub, txt, md)'} variant="secondary" onPress={pick} />
+        <Button label={file ? 'Pick a different file' : 'Pick a file (pdf, epub, txt, md)'} variant="secondary" onPress={pick} />
         {file ? (
           <Button label="Remove file" variant="quiet" onPress={() => setFile(null)} />
         ) : (

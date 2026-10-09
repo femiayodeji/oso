@@ -194,7 +194,7 @@ ${chapterNotes(ctx.chapters)}`;
 }
 
 export const CHAT_FALLBACKS = {
-  planSet: (days: number) => `Done. Your plan is set to ${days} ${days === 1 ? 'day' : 'days'}.`,
+  planSet: (days: number) => `Done. What is left is now split over ${days} ${days === 1 ? 'day' : 'days'}.`,
   planNotReady: 'I can set your plan as soon as the chapters are ready. Ask me again in a moment.',
   empty: 'Sorry, I did not catch that. Could you ask again?',
 };

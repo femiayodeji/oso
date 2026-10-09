@@ -23,6 +23,11 @@ export async function replacePlanTasks(
     ]);
     if (!book) throw new Error(`Book ${bookId} not found`);
 
+    // New tasks get ids above every existing one. SQLite would otherwise reuse the ids
+    // deleted below, and an open Today feed could not tell a new task from the old one.
+    const last = await db.getFirstAsync<{ id: number | null }>('SELECT MAX(id) AS id FROM tasks', []);
+    const firstNewId = (last?.id ?? 0) + 1;
+
     await db.runAsync('DELETE FROM tasks WHERE book_id = ? AND completed_at IS NULL', [bookId]);
 
     const completed = await db.getAllAsync<{ id: number }>(
@@ -49,14 +54,17 @@ export async function replacePlanTasks(
 
     const { planDays, tasks: planned } = plan(cards, completed.length);
     for (let i = 0; i < planned.length; i++) {
-      const inserted = await db.runAsync(
-        'INSERT INTO tasks (book_id, idx, title) VALUES (?, ?, ?)',
-        [bookId, completed.length + i, planned[i].title],
-      );
+      const taskId = firstNewId + i;
+      await db.runAsync('INSERT INTO tasks (id, book_id, idx, title) VALUES (?, ?, ?, ?)', [
+        taskId,
+        bookId,
+        completed.length + i,
+        planned[i].title,
+      ]);
       for (const ids of chunk(planned[i].cardIds, MAX_IN_PARAMS)) {
         await db.runAsync(
           `UPDATE cards SET task_id = ? WHERE task_id IS NULL AND id IN (${placeholders(ids.length)})`,
-          [inserted.lastInsertRowId, ...ids],
+          [taskId, ...ids],
         );
       }
     }

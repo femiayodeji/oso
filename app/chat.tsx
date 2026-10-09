@@ -53,8 +53,12 @@ export default function ChatScreen() {
     try {
       const result = await sendChatMessage(bookId, clean);
       if (result.action?.type === 'set_plan') {
-        const { days, taskCount } = result.action;
-        setPlanNote(`Plan set: ${days} ${days === 1 ? 'day' : 'days'}, ${taskCount} ${taskCount === 1 ? 'task' : 'tasks'}.`);
+        const { days, taskCount, completedCount } = result.action;
+        const left = taskCount - completedCount;
+        const more = completedCount > 0 ? ' more' : '';
+        setPlanNote(
+          `Plan set: ${days}${more} ${days === 1 ? 'day' : 'days'}, ${left} ${left === 1 ? 'task' : 'tasks'} to go.`,
+        );
       }
     } catch (e) {
       if (isNoKeyError(e)) goToSettings();

@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { FlatList, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  FlatList,
+  Platform,
+  StyleSheet,
+  View,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 
 import { listCardsForTask, listDueReviewCards } from '../../db/cards';
 import { completeTask } from '../../db/tasks';
@@ -16,6 +24,9 @@ import { CardPage } from './CardPage';
 import type { ActiveTask } from './todayData';
 
 const REVIEW_LIMIT = 10;
+const SETTLE_MS = 150;
+// Fraction of a page the list may sit off a page boundary before it is moved back.
+const SETTLE_SLACK = 0.05;
 
 interface Item {
   key: string;
@@ -24,12 +35,17 @@ interface Item {
 }
 
 interface Props {
-  task: ActiveTask;
+  // null = review only: just the due review cards, and finishing completes no task.
+  task: ActiveTask | null;
   onCompleted: (bookFinished: boolean) => void;
 }
 
 // One card per page, the task's own cards first, then due review cards, then Finish.
 export function TaskFeed({ task, onCompleted }: Props) {
+  const taskId = task?.id ?? null;
+  const listRef = useRef<FlatList<Item>>(null);
+  const dragging = useRef(false);
+  const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { spacing } = useTheme();
   const [cards, setCards] = useState<Card[] | null>(null);
   const [reviews, setReviews] = useState<Card[]>([]);
@@ -41,8 +57,8 @@ export function TaskFeed({ task, onCompleted }: Props) {
   useEffect(() => {
     let alive = true;
     Promise.all([
-      listCardsForTask(task.id),
-      listDueReviewCards(todayLocal(), { excludeTaskId: task.id, limit: REVIEW_LIMIT }),
+      taskId == null ? Promise.resolve<Card[]>([]) : listCardsForTask(taskId),
+      listDueReviewCards(todayLocal(), { excludeTaskId: taskId ?? undefined, limit: REVIEW_LIMIT }),
     ])
       .then(([own, due]) => {
         if (!alive) return;
@@ -55,7 +71,7 @@ export function TaskFeed({ task, onCompleted }: Props) {
     return () => {
       alive = false;
     };
-  }, [task.id]);
+  }, [taskId]);
 
   const items = useMemo<Item[]>(
     () => [
@@ -73,10 +89,15 @@ export function TaskFeed({ task, onCompleted }: Props) {
   }, []);
 
   const finish = async () => {
+    // A review-only session completes no task, so it is not streak activity.
+    if (taskId == null) {
+      onCompleted(false);
+      return;
+    }
     setFinishing(true);
     setFinishError(null);
     try {
-      const result = await completeTask(task.id, todayLocal());
+      const result = await completeTask(taskId, todayLocal());
       playSound('streak');
       void syncReminders();
       onCompleted(result.bookFinished);
@@ -88,6 +109,31 @@ export function TaskFeed({ task, onCompleted }: Props) {
 
   const onLayout = (e: LayoutChangeEvent) => setHeight(Math.floor(e.nativeEvent.layout.height));
 
+  useEffect(
+    () => () => {
+      if (settle.current) clearTimeout(settle.current);
+    },
+    [],
+  );
+
+  // Android only. A long card scrolls inside its page and hands leftover movement to this list
+  // through nested scrolling, which moves the list without running its page snap. If the list
+  // comes to rest between two pages, move it to the nearer one.
+  const onScroll =
+    Platform.OS === 'android'
+      ? (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+          const y = e.nativeEvent.contentOffset.y;
+          if (settle.current) clearTimeout(settle.current);
+          settle.current = setTimeout(() => {
+            if (dragging.current || height === 0) return;
+            const page = Math.round(y / height);
+            if (Math.abs(y - page * height) > height * SETTLE_SLACK) listRef.current?.scrollToOffset({ offset: page * height });
+          }, SETTLE_MS);
+        }
+      : undefined;
+
+  const finishLine = task ? `End of ${task.title}` : reviews.length > 0 ? 'End of review' : 'Nothing is due for review.';
+
   if (loadError) return <ErrorLine text={loadError} />;
 
   return (
@@ -96,12 +142,20 @@ export function TaskFeed({ task, onCompleted }: Props) {
         <LoadingLine />
       ) : (
         <FlatList
+          ref={listRef}
           data={items}
           keyExtractor={(item) => item.key}
           pagingEnabled
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           windowSize={21}
+          onScroll={onScroll}
+          onScrollBeginDrag={() => {
+            dragging.current = true;
+          }}
+          onScrollEndDrag={() => {
+            dragging.current = false;
+          }}
           getItemLayout={(_, index) => ({ length: height, offset: height * index, index })}
           renderItem={({ item, index }) =>
             item.card ? (
@@ -115,10 +169,10 @@ export function TaskFeed({ task, onCompleted }: Props) {
             ) : (
               <View style={[styles.finish, { height, padding: spacing.xl, gap: spacing.lg }]}>
                 <AppText variant="caption" center>
-                  {`End of ${task.title}`}
+                  {finishLine}
                 </AppText>
                 <ErrorText center>{finishError}</ErrorText>
-                <Button label="Finish" silent disabled={finishing} onPress={finish} />
+                <Button label={task ? 'Finish' : 'Done'} silent disabled={finishing} onPress={finish} />
               </View>
             )
           }

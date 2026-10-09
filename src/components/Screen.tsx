@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { useTheme } from '../theme';
@@ -12,7 +12,7 @@ interface Props {
   scroll?: boolean;
   padded?: boolean;
   keyboard?: boolean;
-  // Native header height, needed so the keyboard offset is right on iOS stack screens.
+  // Native header height, needed so the keyboard offset is right on stack screens.
   keyboardOffset?: number;
 }
 
@@ -34,7 +34,9 @@ export function Screen({ children, edges = ['top'], scroll, padded = true, keybo
       {keyboard ? (
         <KeyboardAvoidingView
           style={styles.fill}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          // Android is edge-to-edge, so the window is not resized for the keyboard. 'padding' only
+          // adds the part of this view the keyboard still overlaps, so it is zero if the OS resized.
+          behavior="padding"
           keyboardVerticalOffset={keyboardOffset}
         >
           {body}

@@ -17,6 +17,7 @@ import { listChatMessages } from '../src/db/chat';
 import { listTasks } from '../src/db/tasks';
 import { sendChatMessage } from '../src/llm/chat';
 import { describeLlmError, isNoKeyError } from '../src/llm/errors';
+import { planQuickReply } from '../src/llm/prompts';
 import { useTheme } from '../src/theme';
 
 const HISTORY = 50;
@@ -99,7 +100,7 @@ export default function ChatScreen() {
         </View>
       ) : null}
       {!hasPlan && !preparing && !pending && !planNote ? (
-        <Chips label="Quick replies" options={QUICK_REPLIES} onChange={(days) => void send(`Finish this in ${days} days`)} />
+        <Chips label="Quick replies" options={QUICK_REPLIES} onChange={(days) => void send(planQuickReply(days))} />
       ) : null}
     </View>
   );
@@ -112,7 +113,7 @@ export default function ChatScreen() {
           This book is still being prepared. A plan can be set once its chapters are ready.
         </AppText>
       ) : null}
-      {empty && !hasPlan && !sendError ? (
+      {empty && !hasPlan && !preparing && !sendError ? (
         <View style={styles.fill}>
           <EmptyState
             mascot="chat"

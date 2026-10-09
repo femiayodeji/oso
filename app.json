@@ -1,0 +1,71 @@
+{
+  "expo": {
+    "name": "Oso",
+    "slug": "oso",
+    "scheme": "oso",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.femiayodeji.oso"
+    },
+    "android": {
+      "package": "com.femiayodeji.oso",
+      "adaptiveIcon": {
+        "backgroundColor": "#1F6B4A",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "./assets/fonts/Nunito/Nunito-Regular.ttf",
+            "./assets/fonts/Nunito/Nunito-SemiBold.ttf",
+            "./assets/fonts/Nunito/Nunito-Bold.ttf"
+          ]
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#F7F6F2",
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#121614"
+          }
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1F6B4A"
+        }
+      ],
+      "expo-asset"
+    ]
+  }
+}

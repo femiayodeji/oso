@@ -42,3 +42,7 @@ yarn-error.*
 
 # local env files
 .env
+
+# local sample books and agent worktrees
+/books
+.claude/worktrees/

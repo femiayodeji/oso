@@ -24,7 +24,9 @@ async function ensureChannel(): Promise<void> {
 
 function toPermission(status: Notifications.NotificationPermissionsStatus): ReminderPermission {
   if (status.granted) return 'granted';
-  return status.status === 'denied' ? 'denied' : 'undetermined';
+  // Android 13+ reports 'denied' before the user has ever been asked; canAskAgain tells
+  // that apart from a real refusal, where only the system settings can turn it back on.
+  return status.status === 'denied' && !status.canAskAgain ? 'denied' : 'undetermined';
 }
 
 export async function setupNotifications(): Promise<void> {

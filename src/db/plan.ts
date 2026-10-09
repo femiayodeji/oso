@@ -1,4 +1,4 @@
-import type { PlanCard, PlannedTask } from '../plan/splitPlan';
+import type { Plan, PlanCard } from '../plan/splitPlan';
 import { withTransaction } from './index';
 import { MAX_IN_PARAMS, chunk, placeholders } from './sql';
 
@@ -9,13 +9,13 @@ interface PlanCardRow {
 }
 
 // The SQL half of applyPlan, in ONE transaction: drop the book's incomplete tasks, hand
-// the cards that are not in a completed task to `split`, and store the result.
-// Completed tasks keep their cards, title and completed_at; they are only renumbered to
-// 0..n-1 (in their existing order) so task idx stays dense and new tasks follow them.
+// the cards that are not in a completed task to `plan`, and store the tasks and plan_days
+// it returns. Completed tasks keep their cards, title and completed_at; they are only
+// renumbered to 0..n-1 (in their existing order) so task idx stays dense and new tasks
+// follow them.
 export async function replacePlanTasks(
   bookId: number,
-  planDays: number,
-  split: (cards: PlanCard[], completedCount: number) => PlannedTask[],
+  plan: (cards: PlanCard[], completedCount: number) => Plan,
 ): Promise<{ taskCount: number; completedCount: number }> {
   return withTransaction(async (db) => {
     const book = await db.getFirstAsync<{ id: number }>('SELECT id FROM books WHERE id = ?', [
@@ -47,7 +47,7 @@ export async function replacePlanTasks(
       chapterTitle: r.chapter_title,
     }));
 
-    const planned = split(cards, completed.length);
+    const { planDays, tasks: planned } = plan(cards, completed.length);
     for (let i = 0; i < planned.length; i++) {
       const inserted = await db.runAsync(
         'INSERT INTO tasks (book_id, idx, title) VALUES (?, ?, ?)',

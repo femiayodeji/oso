@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { Alert, View } from 'react-native';
 
 import { deleteBook } from '../../db/books';
+import { deleteBookFile } from '../../llm/bookText';
 import { isNoKeyError } from '../../llm/errors';
-import { regenerateBook } from '../../llm/pipeline';
+import { isGenerating, regenerateBook } from '../../llm/pipeline';
 import { useTheme } from '../../theme';
 import type { Book } from '../../types';
-import { ErrorText } from '../AppText';
+import { AppText, ErrorText } from '../AppText';
 import { Button } from '../Button';
 import { goToSettings } from '../nav';
 import { errorMessage } from '../useFocusLoad';
@@ -55,15 +56,21 @@ export function BookActions({ book, onChanged }: Props) {
   const remove = () =>
     confirm(`Delete ${book.title}?`, 'Its chapters, cards and tasks are removed. Your streak is kept.', 'Delete', () => {
       deleteBook(book.id)
-        .then(() => router.back())
+        .then(() => {
+          deleteBookFile(book.fileUri);
+          router.back();
+        })
         .catch((e: unknown) => setError(errorMessage(e)));
     });
 
-  const busy = book.status === 'generating';
+  // Busy only while work is really running: an interrupted book (status 'generating',
+  // nothing running) can still be regenerated or deleted.
+  const busy = isGenerating(book.id);
 
   return (
     <View style={{ gap: spacing.sm }}>
       <ErrorText>{error}</ErrorText>
+      {busy && book.status !== 'generating' ? <AppText variant="caption">Preparing the new version…</AppText> : null}
       <Button
         label={book.source === 'uploaded' ? 'Replace file and regenerate' : 'Attach a file and regenerate'}
         variant="secondary"
@@ -76,7 +83,7 @@ export function BookActions({ book, onChanged }: Props) {
         disabled={busy}
         onPress={() => confirm('Regenerate this book?', RESET_WARNING, 'Regenerate', () => regenerate())}
       />
-      <Button label="Delete book" variant="quiet" onPress={remove} />
+      <Button label="Delete book" variant="quiet" disabled={busy} onPress={remove} />
     </View>
   );
 }

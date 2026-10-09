@@ -2,10 +2,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { TOUCH_TARGET, useTheme } from '../../theme';
-import type { Chapter, Task } from '../../types';
+import type { ChapterHead } from '../../db/chapters';
+import type { Task } from '../../types';
 import { AppText } from '../AppText';
 
-export function ChapterList({ chapters }: { chapters: Chapter[] }) {
+export function ChapterList({ chapters }: { chapters: ChapterHead[] }) {
   const { spacing } = useTheme();
   return (
     <View style={{ gap: spacing.lg }}>

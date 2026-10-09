@@ -12,7 +12,7 @@ import { goToChat, goToSettings, readTaskInToday } from '../../src/components/na
 import { ErrorLine, LoadingLine, Screen } from '../../src/components/Screen';
 import { useFocusLoad } from '../../src/components/useFocusLoad';
 import { describeLlmError, isNoKeyError } from '../../src/llm/errors';
-import { getGenerationError, runGeneration, subscribeGeneration } from '../../src/llm/pipeline';
+import { getGenerationError, isGenerating, runGeneration, subscribeGeneration } from '../../src/llm/pipeline';
 import { useTheme } from '../../src/theme';
 
 function PlanSection({ detail }: { detail: BookDetail }) {
@@ -75,6 +75,8 @@ export default function BookScreen() {
 
   const { book, chapters, chapterList } = data;
   const prepared = book.status === 'ready' || book.status === 'finished';
+  // Status says generating but nothing is running: the app was closed mid-generation.
+  const interrupted = book.status === 'generating' && !isGenerating(bookId);
 
   return (
     <Screen edges={['bottom']} scroll>
@@ -89,6 +91,9 @@ export default function BookScreen() {
         <EmptyState
           mascot="generating"
           text={chapters.total > 0 ? `Preparing chapters, ${chapters.done} of ${chapters.total}` : 'Preparing chapters…'}
+          buttonLabel={interrupted ? 'Retry' : undefined}
+          onPress={interrupted ? retry : undefined}
+          error={interrupted ? retryError : null}
         />
       ) : null}
       {book.status === 'draft' ? (

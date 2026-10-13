@@ -1,5 +1,5 @@
 import { describeLlmError, isNoKeyError, LlmError } from '../errors';
-import { backoffDelay, mapHttpError, parseRetryAfter, postJson } from '../http';
+import { backoffDelay, getJson, mapHttpError, parseRetryAfter, postJson } from '../http';
 
 const KEY = 'sk-test-secret-123';
 
@@ -110,7 +110,23 @@ describe('postJson', () => {
   });
 });
 
+describe('getJson', () => {
+  it('sends a GET with no body and returns the parsed body', async () => {
+    fetchMock.mockResolvedValueOnce(response(200, { data: [] }));
+    await expect(getJson('https://example.test/v1/models', { headers: { authorization: `Bearer ${KEY}` } })).resolves.toEqual({ data: [] });
+    const [, init] = fetchMock.mock.calls[0];
+    expect(init.method).toBe('GET');
+    expect(init.body).toBeUndefined();
+  });
+});
+
 describe('helpers', () => {
+  it('points an out-of-credit reply (402) at a cheaper model', () => {
+    const err = mapHttpError(402, JSON.stringify({ error: { message: 'Insufficient credits' } }));
+    expect(err.kind).toBe('bad_request');
+    expect(err.message).toMatch(/free or cheaper model/);
+  });
+
   it('parses Retry-After seconds and dates', () => {
     expect(parseRetryAfter('3')).toBe(3000);
     expect(parseRetryAfter(null)).toBeNull();

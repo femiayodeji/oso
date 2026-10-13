@@ -1,14 +1,17 @@
-import { CHECK_SETTINGS, LlmError } from './errors';
+import { CHECK_SETTINGS, LlmError, NO_CREDIT } from './errors';
 
-export type PostJsonOptions = {
+export type GetJsonOptions = {
   headers: Record<string, string>;
-  body: unknown;
   timeoutMs?: number;
   maxRetries?: number;
   sleep?: (ms: number) => Promise<void>;
   // Values that must never appear in an error message (the API key).
   secrets?: string[];
 };
+
+export type PostJsonOptions = GetJsonOptions & { body: unknown };
+
+type Method = 'GET' | 'POST';
 
 const DEFAULT_TIMEOUT_MS = 180_000;
 const DEFAULT_MAX_RETRIES = 2;
@@ -59,6 +62,7 @@ function errorDetail(bodyText: string, secrets: string[]): string {
 
 export function mapHttpError(status: number, bodyText: string, secrets: string[] = []): LlmError {
   if (status === 401) return new LlmError('invalid_key', undefined, status);
+  if (status === 402) return new LlmError('bad_request', NO_CREDIT, status);
   if (status === 429) return new LlmError('rate_limit', undefined, status);
   if (status >= 500) return new LlmError('server', undefined, status);
   // Any other 4xx (400, 403, 404, 422...) is a request the provider will keep rejecting,
@@ -70,8 +74,9 @@ export function mapHttpError(status: number, bodyText: string, secrets: string[]
 }
 
 async function fetchOnce(
+  method: Method,
   url: string,
-  opts: PostJsonOptions,
+  opts: GetJsonOptions & { body?: unknown },
 ): Promise<{ status: number; ok: boolean; text: string; retryAfter: string | null }> {
   const controller = new AbortController();
   let timedOut = false;
@@ -81,9 +86,9 @@ async function fetchOnce(
   }, opts.timeoutMs ?? DEFAULT_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', ...opts.headers },
-      body: JSON.stringify(opts.body),
+      method,
+      headers: method === 'POST' ? { 'content-type': 'application/json', ...opts.headers } : opts.headers,
+      ...(method === 'POST' ? { body: JSON.stringify(opts.body) } : {}),
       signal: controller.signal,
     });
     const text = await res.text();
@@ -95,13 +100,13 @@ async function fetchOnce(
   }
 }
 
-// POSTs JSON and returns the parsed JSON body. Retries 429 and 5xx with backoff,
-// honoring Retry-After. All failures surface as LlmError.
-export async function postJson(url: string, opts: PostJsonOptions): Promise<unknown> {
+// Returns the parsed JSON body. Retries 429 and 5xx with backoff, honoring Retry-After.
+// All failures surface as LlmError.
+async function requestJson(method: Method, url: string, opts: GetJsonOptions & { body?: unknown }): Promise<unknown> {
   const maxRetries = opts.maxRetries ?? DEFAULT_MAX_RETRIES;
   const sleep = opts.sleep ?? defaultSleep;
   for (let attempt = 0; ; attempt++) {
-    const res = await fetchOnce(url, opts);
+    const res = await fetchOnce(method, url, opts);
     if (res.ok) {
       try {
         return JSON.parse(res.text) as unknown;
@@ -115,4 +120,12 @@ export async function postJson(url: string, opts: PostJsonOptions): Promise<unkn
     }
     throw mapHttpError(res.status, res.text, opts.secrets);
   }
+}
+
+export function postJson(url: string, opts: PostJsonOptions): Promise<unknown> {
+  return requestJson('POST', url, opts);
+}
+
+export function getJson(url: string, opts: GetJsonOptions): Promise<unknown> {
+  return requestJson('GET', url, opts);
 }

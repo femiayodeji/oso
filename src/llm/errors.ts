@@ -10,6 +10,7 @@ export type LlmErrorKind =
 
 // Where a rejected request (wrong model name, wrong base URL) gets fixed.
 export const CHECK_SETTINGS = 'Check the model name and base URL in Settings.';
+export const NO_CREDIT = 'Not enough credit for this model. Pick a free or cheaper model in Settings.';
 
 const DEFAULT_MESSAGES: Record<LlmErrorKind, string> = {
   no_key: 'Add an API key in Settings to continue.',

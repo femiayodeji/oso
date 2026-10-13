@@ -1,21 +1,32 @@
 import type { AppSettings, Provider } from '../types';
 
 // The only place default model ids live. Users can override the model in Settings.
+// Defaults are the free option where the provider has one, otherwise its low-cost model.
 export const PROVIDERS: Record<Provider, { label: string; baseUrl: string; defaultModel: string }> = {
   openrouter: {
     label: 'OpenRouter',
     baseUrl: 'https://openrouter.ai/api/v1',
-    defaultModel: 'anthropic/claude-sonnet-5.5',
+    defaultModel: 'openrouter/free',
+  },
+  gemini: {
+    label: 'Gemini',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    defaultModel: 'gemini-flash-latest',
+  },
+  groq: {
+    label: 'Groq',
+    baseUrl: 'https://api.groq.com/openai/v1',
+    defaultModel: 'openai/gpt-oss-120b',
+  },
+  anthropic: {
+    label: 'Anthropic',
+    baseUrl: 'https://api.anthropic.com/v1',
+    defaultModel: 'claude-haiku-5-5',
   },
   openai: {
     label: 'OpenAI',
     baseUrl: 'https://api.openai.com/v1',
     defaultModel: 'gpt-6.1-sol',
-  },
-  anthropic: {
-    label: 'Anthropic',
-    baseUrl: 'https://api.anthropic.com/v1',
-    defaultModel: 'claude-opus-5-5',
   },
 };
 

@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   bestStreak: 0,
 };
 
-const PROVIDERS: Provider[] = ['openrouter', 'openai', 'anthropic'];
+const PROVIDERS: Provider[] = ['openrouter', 'gemini', 'groq', 'anthropic', 'openai'];
 const COLOR_SCHEMES: ColorSchemeSetting[] = ['system', 'light', 'dark'];
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 

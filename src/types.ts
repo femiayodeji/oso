@@ -57,7 +57,7 @@ export interface ChatMessage {
   createdAt: string;
 }
 
-export type Provider = 'openrouter' | 'openai' | 'anthropic';
+export type Provider = 'openrouter' | 'gemini' | 'groq' | 'anthropic' | 'openai';
 export type ColorSchemeSetting = 'system' | 'light' | 'dark';
 
 // Non-secret settings, stored as strings in the `settings` table.

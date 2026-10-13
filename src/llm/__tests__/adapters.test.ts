@@ -71,7 +71,7 @@ describe('anthropic adapter', () => {
 describe('providers', () => {
   it('falls back to the provider default model', () => {
     expect(resolveModel(settings({}))).toBe(PROVIDERS.openrouter.defaultModel);
-    expect(resolveModel(settings({ provider: 'anthropic' }))).toBe('claude-opus-5-5');
+    expect(resolveModel(settings({ provider: 'anthropic' }))).toBe(PROVIDERS.anthropic.defaultModel);
     expect(resolveModel(settings({ model: ' custom/model ' }))).toBe('custom/model');
   });
 

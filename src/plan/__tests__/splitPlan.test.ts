@@ -1,98 +1,98 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { planRemaining, planWithinTotal, splitIntoTasks, type PlanCard } from '../splitPlan';
+import { planRemaining, planWithinTotal, splitIntoSessions, type PlanCard } from '../splitPlan';
 
-// `perChapter[i]` cards in chapter i, ids counting up from 1 in reading order.
-function makeCards(perChapter: number[]): PlanCard[] {
+// `perUnit[i]` cards in unit i, ids counting up from 1 in reading order.
+function makeCards(perUnit: number[]): PlanCard[] {
   const cards: PlanCard[] = [];
   let id = 1;
-  perChapter.forEach((count, chapterIdx) => {
+  perUnit.forEach((count, unitIdx) => {
     for (let i = 0; i < count; i++) {
-      cards.push({ id: id++, chapterIdx, chapterTitle: `Chapter ${chapterIdx + 1}` });
+      cards.push({ id: id++, unitIdx, unitTitle: `Unit ${unitIdx + 1}` });
     }
   });
   return cards;
 }
 
-const sizes = (tasks: { cardIds: number[] }[]) => tasks.map((t) => t.cardIds.length);
-const flat = (tasks: { cardIds: number[] }[]) => tasks.flatMap((t) => t.cardIds);
+const sizes = (sessions: { cardIds: number[] }[]) => sessions.map((t) => t.cardIds.length);
+const flat = (sessions: { cardIds: number[] }[]) => sessions.flatMap((t) => t.cardIds);
 
-describe('splitIntoTasks', () => {
+describe('splitIntoSessions', () => {
   it('returns nothing for no cards', () => {
-    expect(splitIntoTasks([], 5)).toEqual([]);
+    expect(splitIntoSessions([], 5)).toEqual([]);
   });
 
   it('splits evenly when the cards divide by the days', () => {
-    expect(sizes(splitIntoTasks(makeCards([6, 6]), 4))).toEqual([3, 3, 3, 3]);
+    expect(sizes(splitIntoSessions(makeCards([6, 6]), 4))).toEqual([3, 3, 3, 3]);
   });
 
-  it('balances sizes to within one card, larger tasks first', () => {
-    expect(sizes(splitIntoTasks(makeCards([10]), 3))).toEqual([4, 3, 3]);
-    expect(sizes(splitIntoTasks(makeCards([11]), 3))).toEqual([4, 4, 3]);
+  it('balances sizes to within one card, larger sessions first', () => {
+    expect(sizes(splitIntoSessions(makeCards([10]), 3))).toEqual([4, 3, 3]);
+    expect(sizes(splitIntoSessions(makeCards([11]), 3))).toEqual([4, 4, 3]);
   });
 
   it('keeps reading order and uses every card exactly once', () => {
     const cards = makeCards([4, 7, 2]);
-    const tasks = splitIntoTasks(cards, 5);
-    expect(flat(tasks)).toEqual(cards.map((c) => c.id));
+    const sessions = splitIntoSessions(cards, 5);
+    expect(flat(sessions)).toEqual(cards.map((c) => c.id));
   });
 
   it('does not reorder cards that arrive out of id order', () => {
     const cards: PlanCard[] = [
-      { id: 9, chapterIdx: 0, chapterTitle: 'A' },
-      { id: 2, chapterIdx: 0, chapterTitle: 'A' },
-      { id: 5, chapterIdx: 1, chapterTitle: 'B' },
+      { id: 9, unitIdx: 0, unitTitle: 'A' },
+      { id: 2, unitIdx: 0, unitTitle: 'A' },
+      { id: 5, unitIdx: 1, unitTitle: 'B' },
     ];
-    expect(flat(splitIntoTasks(cards, 2))).toEqual([9, 2, 5]);
+    expect(flat(splitIntoSessions(cards, 2))).toEqual([9, 2, 5]);
   });
 
-  it('never makes more tasks than cards', () => {
-    const tasks = splitIntoTasks(makeCards([3]), 10);
-    expect(sizes(tasks)).toEqual([1, 1, 1]);
+  it('never makes more sessions than cards', () => {
+    const sessions = splitIntoSessions(makeCards([3]), 10);
+    expect(sizes(sessions)).toEqual([1, 1, 1]);
   });
 
   it('treats days below 1, fractions and non-numbers as sensible whole days', () => {
     const cards = makeCards([6]);
-    expect(splitIntoTasks(cards, 0)).toHaveLength(1);
-    expect(splitIntoTasks(cards, -3)).toHaveLength(1);
-    expect(splitIntoTasks(cards, Number.NaN)).toHaveLength(1);
-    expect(splitIntoTasks(cards, 2.9)).toHaveLength(2);
+    expect(splitIntoSessions(cards, 0)).toHaveLength(1);
+    expect(splitIntoSessions(cards, -3)).toHaveLength(1);
+    expect(splitIntoSessions(cards, Number.NaN)).toHaveLength(1);
+    expect(splitIntoSessions(cards, 2.9)).toHaveLength(2);
   });
 
-  it('puts everything in one task for a one-day plan', () => {
-    const tasks = splitIntoTasks(makeCards([2, 2]), 1);
-    expect(sizes(tasks)).toEqual([4]);
-    expect(tasks[0].title).toBe('Chapter 1 to Chapter 2');
+  it('puts everything in one session for a one-day plan', () => {
+    const sessions = splitIntoSessions(makeCards([2, 2]), 1);
+    expect(sizes(sessions)).toEqual([4]);
+    expect(sessions[0].title).toBe('Unit 1 to Unit 2');
   });
 
-  it('titles a task after its chapter when it covers one', () => {
-    const tasks = splitIntoTasks(makeCards([4, 4]), 4);
-    expect(tasks.map((t) => t.title)).toEqual(['Chapter 1', 'Chapter 1', 'Chapter 2', 'Chapter 2']);
+  it('titles a session after its unit when it covers one', () => {
+    const sessions = splitIntoSessions(makeCards([4, 4]), 4);
+    expect(sessions.map((t) => t.title)).toEqual(['Unit 1', 'Unit 1', 'Unit 2', 'Unit 2']);
   });
 
-  it('titles a task with the first and last chapter when it spans several', () => {
-    const tasks = splitIntoTasks(makeCards([2, 2, 2, 2]), 2);
-    expect(tasks.map((t) => t.title)).toEqual([
-      'Chapter 1 to Chapter 2',
-      'Chapter 3 to Chapter 4',
+  it('titles a session with the first and last unit when it spans several', () => {
+    const sessions = splitIntoSessions(makeCards([2, 2, 2, 2]), 2);
+    expect(sessions.map((t) => t.title)).toEqual([
+      'Unit 1 to Unit 2',
+      'Unit 3 to Unit 4',
     ]);
-    expect(splitIntoTasks(makeCards([1, 1, 1]), 1)[0].title).toBe('Chapter 1 to Chapter 3');
+    expect(splitIntoSessions(makeCards([1, 1, 1]), 1)[0].title).toBe('Unit 1 to Unit 3');
   });
 
-  it('gives every task a non-empty title and at least one card', () => {
+  it('gives every session a non-empty title and at least one card', () => {
     for (const days of [1, 2, 3, 7, 30]) {
-      for (const task of splitIntoTasks(makeCards([5, 1, 9, 3]), days)) {
-        expect(task.title.length).toBeGreaterThan(0);
-        expect(task.cardIds.length).toBeGreaterThan(0);
+      for (const session of splitIntoSessions(makeCards([5, 1, 9, 3]), days)) {
+        expect(session.title.length).toBeGreaterThan(0);
+        expect(session.cardIds.length).toBeGreaterThan(0);
       }
     }
   });
 });
 
 describe('planRemaining', () => {
-  it('spreads the remaining cards over the days asked for, however many tasks are done', () => {
+  it('spreads the remaining cards over the days asked for, however many sessions are done', () => {
     const plan = planRemaining(makeCards([6, 6]), 5, 3);
-    expect(sizes(plan.tasks)).toEqual([4, 4, 4]);
+    expect(sizes(plan.sessions)).toEqual([4, 4, 4]);
     expect(plan.planDays).toBe(8);
   });
 
@@ -100,31 +100,31 @@ describe('planRemaining', () => {
     const cards = makeCards([5, 5]);
     const plan = planRemaining(cards, 0, 5);
     expect(plan.planDays).toBe(5);
-    expect(plan.tasks).toEqual(splitIntoTasks(cards, 5));
+    expect(plan.sessions).toEqual(splitIntoSessions(cards, 5));
   });
 
   it('keeps every remaining card exactly once, in order', () => {
     const cards = makeCards([4, 7, 2]);
-    expect(flat(planRemaining(cards, 2, 4).tasks)).toEqual(cards.map((c) => c.id));
+    expect(flat(planRemaining(cards, 2, 4).sessions)).toEqual(cards.map((c) => c.id));
   });
 
   it('counts the days asked for even when there are fewer cards than days', () => {
     const plan = planRemaining(makeCards([2]), 3, 5);
-    expect(sizes(plan.tasks)).toEqual([1, 1]);
+    expect(sizes(plan.sessions)).toEqual([1, 1]);
     expect(plan.planDays).toBe(8);
   });
 
   it('treats bad day counts as one day', () => {
     for (const days of [0, -2, Number.NaN]) {
       const plan = planRemaining(makeCards([6]), 2, days);
-      expect(plan.tasks).toHaveLength(1);
+      expect(plan.sessions).toHaveLength(1);
       expect(plan.planDays).toBe(3);
     }
     expect(planRemaining(makeCards([6]), 2, 2.9).planDays).toBe(4);
   });
 
-  it('makes no tasks when no cards are left', () => {
-    expect(planRemaining([], 4, 3)).toEqual({ planDays: 7, tasks: [] });
+  it('makes no sessions when no cards are left', () => {
+    expect(planRemaining([], 4, 3)).toEqual({ planDays: 7, sessions: [] });
   });
 });
 
@@ -132,18 +132,18 @@ describe('planWithinTotal', () => {
   it('fits the remaining cards into what is left of a fixed total', () => {
     const plan = planWithinTotal(makeCards([6, 6]), 2, 5);
     expect(plan.planDays).toBe(5);
-    expect(sizes(plan.tasks)).toEqual([4, 4, 4]);
+    expect(sizes(plan.sessions)).toEqual([4, 4, 4]);
   });
 
   it('equals the total when nothing is completed', () => {
     const plan = planWithinTotal(makeCards([10]), 0, 4);
     expect(plan.planDays).toBe(4);
-    expect(plan.tasks).toHaveLength(4);
+    expect(plan.sessions).toHaveLength(4);
   });
 
   it('adds one more day when the total is already used up', () => {
     const plan = planWithinTotal(makeCards([4]), 5, 5);
-    expect(sizes(plan.tasks)).toEqual([4]);
+    expect(sizes(plan.sessions)).toEqual([4]);
     expect(plan.planDays).toBe(6);
   });
 });

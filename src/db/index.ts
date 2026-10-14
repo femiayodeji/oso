@@ -48,16 +48,16 @@ export async function initDb(): Promise<void> {
 
 let txQueue: Promise<unknown> = Promise.resolve();
 
-// Runs `task` in one transaction on the shared connection. expo-sqlite's
+// Runs `session` in one transaction on the shared connection. expo-sqlite's
 // withTransactionAsync is not exclusive, so transactions are queued here to keep two of
-// them from interleaving. Do not call withTransaction from inside a task (it would wait
+// them from interleaving. Do not call withTransaction from inside a session (it would wait
 // on itself); pass the `db` handle down instead.
-export function withTransaction<T>(task: (db: SQLiteDatabase) => Promise<T>): Promise<T> {
+export function withTransaction<T>(session: (db: SQLiteDatabase) => Promise<T>): Promise<T> {
   const run = txQueue.then(async () => {
     const db = await getDb();
     let result: T | undefined;
     await db.withTransactionAsync(async () => {
-      result = await task(db);
+      result = await session(db);
     });
     return result as T;
   });

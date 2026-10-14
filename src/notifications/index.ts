@@ -17,7 +17,7 @@ async function ensureChannel(): Promise<void> {
   if (Platform.OS !== 'android') return;
   await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
     name: 'Reading reminders',
-    description: 'Evening reminders to finish a reading task.',
+    description: 'Evening reminders to keep your learning streak.',
     importance: Notifications.AndroidImportance.DEFAULT,
   });
 }
@@ -103,7 +103,7 @@ async function runSync(): Promise<void> {
 
 let queue: Promise<void> = Promise.resolve();
 
-// Calls are serialized so an app-open sync and a task-completion sync cannot interleave
+// Calls are serialized so an app-open sync and a session-completion sync cannot interleave
 // their cancel/schedule steps and leave duplicates behind.
 export function syncReminders(): Promise<void> {
   queue = queue.then(runSync).catch(() => undefined);

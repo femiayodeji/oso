@@ -1,25 +1,32 @@
 // Shared row and domain types. Mirrors the SQLite schema in CLAUDE.md.
 
-export type BookSource = 'model_knowledge' | 'uploaded';
-export type BookStatus = 'draft' | 'generating' | 'ready' | 'failed' | 'finished';
+import type { Depth } from './topic/depth';
+import type { TopicIcon } from './topic/icons';
+
+export type TopicSource = 'model_knowledge' | 'uploaded';
+export type TopicStatus = 'draft' | 'generating' | 'ready' | 'failed' | 'finished';
 export type GenStatus = 'pending' | 'done' | 'failed';
-export type CardType = 'summary' | 'key_idea' | 'recall';
+export type CardType = 'summary' | 'key_idea' | 'recall' | 'quiz';
+// Card types that test the learner and come back for spaced review.
+export const TESTING_TYPES: CardType[] = ['recall', 'quiz'];
 export type ChatRole = 'user' | 'assistant';
 
-export interface Book {
+export interface Topic {
   id: number;
   title: string;
   author: string | null;
-  source: BookSource;
+  source: TopicSource;
   fileUri: string | null;
-  status: BookStatus;
+  status: TopicStatus;
   planDays: number | null;
+  icon: TopicIcon | null;
+  depth: Depth | null;
   createdAt: string;
 }
 
-export interface Chapter {
+export interface Unit {
   id: number;
-  bookId: number;
+  topicId: number;
   idx: number;
   title: string;
   sourceText: string | null;
@@ -27,9 +34,9 @@ export interface Chapter {
   genStatus: GenStatus;
 }
 
-export interface Task {
+export interface Session {
   id: number;
-  bookId: number;
+  topicId: number;
   idx: number;
   title: string;
   completedAt: string | null;
@@ -37,13 +44,15 @@ export interface Task {
 
 export interface Card {
   id: number;
-  bookId: number;
-  chapterId: number;
-  taskId: number | null;
+  topicId: number;
+  unitId: number;
+  sessionId: number | null;
   idx: number;
   type: CardType;
   front: string;
-  back: string | null;
+  back: string | null; // recall: the answer; quiz: why the right option is right
+  options: string[] | null; // quiz only
+  answerIdx: number | null; // quiz only: index into options
   flagged: boolean;
   box: number;
   dueDate: string | null;
@@ -51,7 +60,7 @@ export interface Card {
 
 export interface ChatMessage {
   id: number;
-  bookId: number | null;
+  topicId: number | null;
   role: ChatRole;
   content: string;
   createdAt: string;

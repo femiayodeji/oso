@@ -14,9 +14,9 @@ export { completeJsonWith } from './jsonCompletion';
 
 // The key and settings are read at call time so a change in Settings applies immediately.
 export async function complete(req: CompletionRequest): Promise<string> {
-  const apiKey = await getApiKey();
-  if (!apiKey) throw new LlmError('no_key');
   const settings = await getSettings();
+  const apiKey = await getApiKey(settings.provider);
+  if (!apiKey) throw new LlmError('no_key');
   const config = { apiKey, model: resolveModel(settings), baseUrl: resolveBaseUrl(settings) };
   return settings.provider === 'anthropic'
     ? completeAnthropic(config, req)

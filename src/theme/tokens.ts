@@ -7,6 +7,7 @@ export interface ColorTokens {
   textMuted: string;
   border: string;
   accent: string;
+  accentShade: string; // the pressable lip under primary buttons
   onAccent: string;
   danger: string;
 }
@@ -21,6 +22,7 @@ export const palette: Record<Scheme, ColorTokens> = {
     textMuted: '#6B726D',
     border: '#E2DFD6',
     accent: '#1F6B4A',
+    accentShade: '#14482F',
     onAccent: '#F7F6F2',
     danger: '#B3412F',
   },
@@ -31,9 +33,16 @@ export const palette: Record<Scheme, ColorTokens> = {
     textMuted: '#9AA29C',
     border: '#2A302C',
     accent: '#4FB387',
+    accentShade: '#2F7A57',
     onAccent: '#0E1411',
     danger: '#E07A67',
   },
+};
+
+// Confetti only: the celebration on finishing a session or a topic.
+export const celebration: Record<Scheme, string[]> = {
+  light: ['#1F6B4A', '#E2A93B', '#D9644A', '#4F8FD1', '#9C6ADE'],
+  dark: ['#4FB387', '#F2C25B', '#E8846C', '#74A9E3', '#B48AEB'],
 };
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;

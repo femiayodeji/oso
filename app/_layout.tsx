@@ -58,8 +58,8 @@ function RootNavigator() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="chat" options={{ title: 'Chat' }} />
-        <Stack.Screen name="add-book" options={{ title: 'Add a book' }} />
-        <Stack.Screen name="book/[id]" options={{ title: 'Book' }} />
+        <Stack.Screen name="add-topic" options={{ title: 'New topic' }} />
+        <Stack.Screen name="topic/[id]" options={{ title: 'Topic' }} />
       </Stack>
     </>
   );

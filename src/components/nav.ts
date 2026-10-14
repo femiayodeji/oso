@@ -5,21 +5,22 @@ export function goToSettings() {
   router.navigate('/settings');
 }
 
-export function goToChat(bookId: number) {
-  router.push({ pathname: '/chat', params: { bookId: String(bookId) } });
+export function goToChat(topicId: number) {
+  router.push({ pathname: '/chat', params: { topicId: String(topicId) } });
 }
 
-export function goToBook(bookId: number) {
-  router.push({ pathname: '/book/[id]', params: { id: String(bookId) } });
+export function goToTopic(topicId: number) {
+  router.push({ pathname: '/topic/[id]', params: { id: String(topicId) } });
 }
 
-export function goToAddBook() {
-  router.push('/add-book');
+// `q` prefills "what do you want to learn?", e.g. from a tapped suggestion.
+export function goToAddTopic(q?: string) {
+  router.push(q ? { pathname: '/add-topic', params: { q } } : '/add-topic');
 }
 
-// `t` makes repeated taps on the same task count as a new request.
-export function readTaskInToday(taskId: number) {
-  router.navigate({ pathname: '/', params: { taskId: String(taskId), t: String(Date.now()) } });
+// `t` makes repeated taps on the same session count as a new request.
+export function readSessionInToday(sessionId: number) {
+  router.navigate({ pathname: '/', params: { sessionId: String(sessionId), t: String(Date.now()) } });
 }
 
 export function goToToday() {

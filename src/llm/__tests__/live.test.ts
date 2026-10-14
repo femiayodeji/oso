@@ -3,10 +3,10 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
 
-import type { AppSettings, Book, Chapter } from '../../types';
+import type { AppSettings, Topic, Unit } from '../../types';
 import { parseChatReply } from '../chatReply';
 import { complete, testConnection } from '../client';
-import { buildOutline, generateChapterContent } from '../generate';
+import { buildOutline, generateUnitContent } from '../generate';
 import { chatSystemPrompt } from '../prompts';
 
 const mockState: { key: string | null; settings: AppSettings } = {
@@ -88,7 +88,7 @@ const targets = [
   },
 ];
 
-const book: Book = {
+const topic: Topic = {
   id: 1,
   title: 'Atomic Habits',
   author: 'James Clear',
@@ -96,6 +96,8 @@ const book: Book = {
   fileUri: null,
   status: 'generating',
   planDays: null,
+  icon: null,
+  depth: 'quick',
   createdAt: '2026-01-01T00:00:00',
 };
 
@@ -103,7 +105,7 @@ const live = process.env.OSO_LIVE === '1' ? describe : describe.skip;
 
 live.each(targets)('live: $name', (target) => {
   const run = target.key ? it : it.skip;
-  let chapters: Chapter[] = [];
+  let units: Unit[] = [];
 
   beforeAll(() => {
     mockState.key = target.key ?? null;
@@ -115,23 +117,23 @@ live.each(targets)('live: $name', (target) => {
   }, 120_000);
 
   run('outline from model knowledge', async () => {
-    const outline = await buildOutline(book);
+    const { units: outline } = await buildOutline(topic);
     expect(outline.length).toBeGreaterThan(3);
-    chapters = outline.map((c) => ({
+    units = outline.map((c) => ({
       id: c.idx + 1,
-      bookId: book.id,
+      topicId: topic.id,
       idx: c.idx,
       title: c.title,
       sourceText: null,
       summary: null,
       genStatus: 'pending',
     }));
-    console.log(`${target.name}: ${outline.length} chapters, first: ${outline[0].title}`);
+    console.log(`${target.name}: ${outline.length} units, first: ${outline[0].title}`);
   }, 240_000);
 
-  run('chapter summary and cards validate', async () => {
-    expect(chapters.length).toBeGreaterThan(0);
-    const { summary, cards } = await generateChapterContent(book, chapters[0], chapters);
+  run('unit summary and cards validate', async () => {
+    expect(units.length).toBeGreaterThan(0);
+    const { summary, cards } = await generateUnitContent(topic, units[0], units);
     expect(summary.length).toBeGreaterThan(40);
     expect(cards.length).toBeGreaterThan(2);
     for (const card of cards.filter((c) => c.type === 'recall')) expect(card.back).toBeTruthy();
@@ -140,12 +142,12 @@ live.each(targets)('live: $name', (target) => {
 
   run('chat emits a set_plan action when asked', async () => {
     const system = chatSystemPrompt({
-      book,
-      chapters: chapters.slice(0, 3),
+      topic,
+      units: units.slice(0, 3),
       cardsReady: true,
       cardCount: 80,
-      tasksTotal: 0,
-      tasksCompleted: 0,
+      sessionsTotal: 0,
+      sessionsCompleted: 0,
     });
     const raw = await complete({ system, messages: [{ role: 'user', content: 'I want to finish this in 5 days.' }] });
     const parsed = parseChatReply(raw);

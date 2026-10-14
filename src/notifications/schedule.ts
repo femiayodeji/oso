@@ -31,7 +31,7 @@ export function parseTime(value: string, fallback: string): { hour: number; minu
 }
 
 // Full days without activity before the day `offset` days from now, assuming the user does
-// nothing more after this moment. Any task completion triggers a resync, so that assumption
+// nothing more after this moment. Any session completion triggers a resync, so that assumption
 // is the only one the copy can be built on.
 function missedDaysBefore(offset: number, streak: StreakInfo): number {
   if (streak.doneToday) return Math.max(0, offset - 1);

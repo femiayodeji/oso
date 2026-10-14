@@ -10,10 +10,12 @@ import { useTheme } from '../../theme';
 import type { Card, CardType } from '../../types';
 import { AppText, ErrorText } from '../AppText';
 import { Button, IconButton } from '../Button';
+import { PopIn } from '../motion/PopIn';
 import { goToSettings } from '../nav';
 import { FlagControl } from './FlagControl';
+import { QuizOptions } from './QuizOptions';
 
-const TYPE_LABEL: Record<CardType, string> = { summary: 'Summary', key_idea: 'Key idea', recall: 'Recall' };
+const TYPE_LABEL: Record<CardType, string> = { summary: 'Summary', key_idea: 'Key idea', recall: 'Recall', quiz: 'Quiz' };
 
 interface Props {
   card: Card;
@@ -35,6 +37,10 @@ export function CardPage({ card, review, height, position, onReplace }: Props) {
   const [contentHeight, setContentHeight] = useState(0);
   const overflows = bodyHeight > 0 && contentHeight > bodyHeight + 1;
   const recall = card.type === 'recall';
+  const quiz =
+    card.type === 'quiz' && card.options && card.answerIdx !== null && card.answerIdx < card.options.length
+      ? { options: card.options, answerIdx: card.answerIdx }
+      : null;
 
   const reveal = () => {
     if (revealed) return;
@@ -108,28 +114,41 @@ export function CardPage({ card, review, height, position, onReplace }: Props) {
         onLayout={(e) => setBodyHeight(e.nativeEvent.layout.height)}
         onContentSizeChange={(_, h) => setContentHeight(h)}
       >
-        <Pressable
-          style={[styles.bodyContent, { gap: spacing.xl }]}
-          disabled={!recall || revealed}
-          onPress={reveal}
-          accessibilityRole={recall && !revealed ? 'button' : undefined}
-          accessibilityHint={recall && !revealed ? 'Reveals the answer' : undefined}
-        >
-          <AppText variant="card">{card.front}</AppText>
-          {recall && !revealed ? <AppText variant="caption">Tap to reveal</AppText> : null}
-          {recall && revealed ? (
-            <View style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.xl }}>
-              <AppText variant="card">{card.back ?? ''}</AppText>
-            </View>
+        <View style={[styles.bodyContent, { gap: spacing.xl }]}>
+          <Pressable
+            style={{ gap: spacing.xl }}
+            disabled={!recall || revealed}
+            onPress={reveal}
+            accessibilityRole={recall && !revealed ? 'button' : undefined}
+            accessibilityHint={recall && !revealed ? 'Reveals the answer' : undefined}
+          >
+            <AppText variant="card">{card.front}</AppText>
+            {recall && !revealed ? <AppText variant="caption">Tap to reveal</AppText> : null}
+            {recall && revealed ? (
+              <PopIn kind="rise" style={{ borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.xl }}>
+                <AppText variant="card">{card.back ?? ''}</AppText>
+              </PopIn>
+            ) : null}
+          </Pressable>
+          {quiz ? (
+            <QuizOptions
+              key={`${card.id}:${card.front}`}
+              options={quiz.options}
+              answerIdx={quiz.answerIdx}
+              explanation={card.back}
+              onAnswered={(correct) => {
+                if (review) void answer(correct);
+              }}
+            />
           ) : null}
-        </Pressable>
+        </View>
       </ScrollView>
 
       {review && revealed && !reviewed ? (
-        <View style={[styles.actions, { gap: spacing.md }]}>
+        <PopIn kind="rise" delay={150} style={[styles.actions, { gap: spacing.md }]}>
           <Button label="Got it" variant="secondary" style={styles.action} onPress={() => answer(true)} />
           <Button label="Not yet" variant="secondary" style={styles.action} onPress={() => answer(false)} />
-        </View>
+        </PopIn>
       ) : null}
       <AppText variant="caption" center style={{ paddingTop: spacing.md }}>
         {reviewed ? `Noted · ${position}` : position}

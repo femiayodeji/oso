@@ -102,7 +102,7 @@ describe('buildReminderSchedule', () => {
 
   it('uses calm copy today when the streak is safe', () => {
     const [evening, late] = build(at(9), safe);
-    expect(evening.title).toBe('Time to read');
+    expect(evening.title).toBe('Time to learn');
     expect(evening.body).toContain('4-day streak');
     expect(late.title).not.toContain('dies');
   });

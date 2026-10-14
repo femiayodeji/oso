@@ -73,4 +73,52 @@ export const MIGRATIONS: string[] = [
   CREATE INDEX idx_cards_due ON cards(due_date);
   CREATE INDEX idx_chat_book ON chat_messages(book_id, id);
   `,
+  // Model and base URL become per provider ('model.groq'); the old values belong to the
+  // provider that was active.
+  `
+  INSERT OR REPLACE INTO settings (key, value)
+    SELECT key || '.' || COALESCE((SELECT value FROM settings WHERE key = 'provider'), 'openrouter'), value
+    FROM settings WHERE key IN ('model', 'baseUrl');
+  DELETE FROM settings WHERE key IN ('model', 'baseUrl');
+  `,
+  // Books become topics (a book is one kind of topic), chapters become units and tasks
+  // become sessions. Topics gain an icon and a depth; cards gain the 'quiz' type, which
+  // needs a rebuilt table because SQLite cannot change a CHECK constraint in place.
+  `
+  ALTER TABLE books RENAME TO topics;
+  ALTER TABLE chapters RENAME TO units;
+  ALTER TABLE tasks RENAME TO sessions;
+  ALTER TABLE units RENAME COLUMN book_id TO topic_id;
+  ALTER TABLE sessions RENAME COLUMN book_id TO topic_id;
+  ALTER TABLE chat_messages RENAME COLUMN book_id TO topic_id;
+  ALTER TABLE daily_activity RENAME COLUMN tasks_completed TO sessions_completed;
+
+  ALTER TABLE topics ADD COLUMN icon TEXT;
+  ALTER TABLE topics ADD COLUMN depth TEXT CHECK (depth IN ('quick','solid','deep'));
+
+  CREATE TABLE cards_new (
+    id INTEGER PRIMARY KEY,
+    topic_id INTEGER NOT NULL REFERENCES topics(id) ON DELETE CASCADE,
+    unit_id INTEGER NOT NULL REFERENCES units(id) ON DELETE CASCADE,
+    session_id INTEGER REFERENCES sessions(id) ON DELETE SET NULL,
+    idx INTEGER NOT NULL,
+    type TEXT NOT NULL CHECK (type IN ('summary','key_idea','recall','quiz')),
+    front TEXT NOT NULL,
+    back TEXT,
+    options TEXT,
+    answer_idx INTEGER,
+    flagged INTEGER NOT NULL DEFAULT 0,
+    box INTEGER NOT NULL DEFAULT 0,
+    due_date TEXT
+  );
+  INSERT INTO cards_new (id, topic_id, unit_id, session_id, idx, type, front, back, flagged, box, due_date)
+    SELECT id, book_id, chapter_id, task_id, idx, type, front, back, flagged, box, due_date FROM cards;
+  DROP TABLE cards;
+  ALTER TABLE cards_new RENAME TO cards;
+
+  CREATE INDEX idx_cards_topic ON cards(topic_id);
+  CREATE INDEX idx_cards_unit ON cards(unit_id, idx);
+  CREATE INDEX idx_cards_session ON cards(session_id);
+  CREATE INDEX idx_cards_due ON cards(due_date);
+  `,
 ];

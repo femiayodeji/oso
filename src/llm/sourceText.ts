@@ -6,12 +6,13 @@ import { joinPdfPages, openPdf } from './pdf';
 
 export { buildUploadedOutline, chunkBySize, detectChapters } from './textSplit';
 
-const BOOKS_DIR = 'books';
+// The folder name predates topics; existing uploads live there, so it stays.
+const SOURCES_DIR = 'books';
 const SUPPORTED = ['txt', 'md', 'epub', 'pdf'];
 const PDF_PAGES_PER_TICK = 4;
 
-function booksDirectory(): Directory {
-  const dir = new Directory(Paths.document, BOOKS_DIR);
+function sourcesDirectory(): Directory {
+  const dir = new Directory(Paths.document, SOURCES_DIR);
   if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
   return dir;
 }
@@ -23,13 +24,13 @@ function extensionOf(name: string): string {
 
 function safeName(name: string): string {
   const base = name.replace(/\.[a-z0-9]+$/i, '').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '');
-  return (base || 'book').slice(0, 40);
+  return (base || 'topic').slice(0, 40);
 }
 
 // Copies a picked file into the app's document directory so it survives cache
-// cleanup and can be re-read when the book is regenerated.
-export async function importBookFile(uri: string, name: string): Promise<string> {
-  const dir = booksDirectory();
+// cleanup and can be re-read when the topic is regenerated.
+export async function importSourceFile(uri: string, name: string): Promise<string> {
+  const dir = sourcesDirectory();
   if (uri.startsWith(dir.uri)) return uri;
   const ext = extensionOf(name) || extensionOf(uri) || 'txt';
   if (!SUPPORTED.includes(ext)) throw new Error('Unsupported file type. Use .pdf, .epub, .txt, or .md.');
@@ -39,18 +40,18 @@ export async function importBookFile(uri: string, name: string): Promise<string>
 }
 
 export async function savePastedText(text: string): Promise<string> {
-  const file = new File(booksDirectory(), `${Date.now()}-pasted.txt`);
+  const file = new File(sourcesDirectory(), `${Date.now()}-pasted.txt`);
   file.create({ overwrite: true });
   file.write(text);
   return file.uri;
 }
 
-// Removes a file this module stored, when its book is deleted or its file is replaced.
-// Best effort: a file that is already gone, or lives outside the books folder, is left alone.
-export function deleteBookFile(uri: string | null): void {
+// Removes a file this module stored, when its topic is deleted or its file is replaced.
+// Best effort: a file that is already gone, or lives outside the topics folder, is left alone.
+export function deleteSourceFile(uri: string | null): void {
   if (!uri) return;
   try {
-    if (!uri.startsWith(booksDirectory().uri)) return;
+    if (!uri.startsWith(sourcesDirectory().uri)) return;
     const file = new File(uri);
     if (file.exists) file.delete();
   } catch {
@@ -85,9 +86,9 @@ async function readPdf(file: File): Promise<string> {
   return joinPdfPages(pages);
 }
 
-export async function readBookText(uri: string): Promise<string> {
+export async function readSourceText(uri: string): Promise<string> {
   const file = new File(uri);
-  if (!file.exists) throw new Error('The book file is missing.');
+  if (!file.exists) throw new Error('The topic file is missing.');
   const ext = extensionOf(uri);
   if (ext === 'epub') return readEpub(file);
   if (ext === 'pdf') return readPdf(file);

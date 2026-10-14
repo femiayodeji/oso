@@ -7,10 +7,11 @@ import {
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
+  type ViewToken,
 } from 'react-native';
 
-import { listCardsForTask, listDueReviewCards } from '../../db/cards';
-import { completeTask } from '../../db/tasks';
+import { listCardsForSession, listDueReviewCards } from '../../db/cards';
+import { completeSession } from '../../db/sessions';
 import { todayLocal } from '../../lib/dates';
 import { syncReminders } from '../../notifications';
 import { playSound } from '../../sound';
@@ -18,15 +19,17 @@ import { useTheme } from '../../theme';
 import type { Card } from '../../types';
 import { AppText, ErrorText } from '../AppText';
 import { Button } from '../Button';
+import { ProgressBar } from '../motion/ProgressBar';
 import { ErrorLine, LoadingLine } from '../Screen';
 import { errorMessage } from '../useFocusLoad';
 import { CardPage } from './CardPage';
-import type { ActiveTask } from './todayData';
+import type { ActiveSession } from './todayData';
 
 const REVIEW_LIMIT = 10;
 const SETTLE_MS = 150;
 // Fraction of a page the list may sit off a page boundary before it is moved back.
 const SETTLE_SLACK = 0.05;
+const VIEWABILITY = { itemVisiblePercentThreshold: 60 };
 
 interface Item {
   key: string;
@@ -35,14 +38,14 @@ interface Item {
 }
 
 interface Props {
-  // null = review only: just the due review cards, and finishing completes no task.
-  task: ActiveTask | null;
-  onCompleted: (bookFinished: boolean) => void;
+  // null = review only: just the due review cards, and finishing completes no session.
+  session: ActiveSession | null;
+  onCompleted: (topicFinished: boolean) => void;
 }
 
-// One card per page, the task's own cards first, then due review cards, then Finish.
-export function TaskFeed({ task, onCompleted }: Props) {
-  const taskId = task?.id ?? null;
+// One card per page, the session's own cards first, then due review cards, then Finish.
+export function SessionFeed({ session, onCompleted }: Props) {
+  const sessionId = session?.id ?? null;
   const listRef = useRef<FlatList<Item>>(null);
   const dragging = useRef(false);
   const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -53,12 +56,18 @@ export function TaskFeed({ task, onCompleted }: Props) {
   const [height, setHeight] = useState(0);
   const [finishing, setFinishing] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  // FlatList requires this callback to keep the same identity for its whole life.
+  const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const index = viewableItems[0]?.index;
+    if (index != null) setPage(index);
+  }).current;
 
   useEffect(() => {
     let alive = true;
     Promise.all([
-      taskId == null ? Promise.resolve<Card[]>([]) : listCardsForTask(taskId),
-      listDueReviewCards(todayLocal(), { excludeTaskId: taskId ?? undefined, limit: REVIEW_LIMIT }),
+      sessionId == null ? Promise.resolve<Card[]>([]) : listCardsForSession(sessionId),
+      listDueReviewCards(todayLocal(), { excludeSessionId: sessionId ?? undefined, limit: REVIEW_LIMIT }),
     ])
       .then(([own, due]) => {
         if (!alive) return;
@@ -71,7 +80,7 @@ export function TaskFeed({ task, onCompleted }: Props) {
     return () => {
       alive = false;
     };
-  }, [taskId]);
+  }, [sessionId]);
 
   const items = useMemo<Item[]>(
     () => [
@@ -89,18 +98,18 @@ export function TaskFeed({ task, onCompleted }: Props) {
   }, []);
 
   const finish = async () => {
-    // A review-only session completes no task, so it is not streak activity.
-    if (taskId == null) {
+    // A review-only session completes no session, so it is not streak activity.
+    if (sessionId == null) {
       onCompleted(false);
       return;
     }
     setFinishing(true);
     setFinishError(null);
     try {
-      const result = await completeTask(taskId, todayLocal());
+      const result = await completeSession(sessionId, todayLocal());
       playSound('streak');
       void syncReminders();
-      onCompleted(result.bookFinished);
+      onCompleted(result.topicFinished);
     } catch (e) {
       setFinishError(errorMessage(e));
       setFinishing(false);
@@ -134,52 +143,62 @@ export function TaskFeed({ task, onCompleted }: Props) {
         }
       : undefined;
 
-  const finishLine = task ? `End of ${task.title}` : reviews.length > 0 ? 'End of review' : 'Nothing is due for review.';
+  const finishLine = session ? `End of ${session.title}` : reviews.length > 0 ? 'End of review' : 'Nothing is due for review.';
 
   if (loadError) return <ErrorLine text={loadError} />;
 
   return (
-    <View style={styles.fill} onLayout={onLayout}>
-      {cards === null || height === 0 ? (
-        <LoadingLine />
-      ) : (
-        <FlatList
-          ref={listRef}
-          data={items}
-          keyExtractor={(item) => item.key}
-          pagingEnabled
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          windowSize={21}
-          onScroll={onScroll}
-          onScrollBeginDrag={() => {
-            dragging.current = true;
-          }}
-          onScrollEndDrag={() => {
-            dragging.current = false;
-          }}
-          getItemLayout={(_, index) => ({ length: height, offset: height * index, index })}
-          renderItem={({ item, index }) =>
-            item.card ? (
-              <CardPage
-                card={item.card}
-                review={item.review}
-                height={height}
-                position={`${index + 1} of ${items.length - 1}`}
-                onReplace={replace}
-              />
-            ) : (
-              <View style={[styles.finish, { height, padding: spacing.xl, gap: spacing.lg }]}>
-                <AppText variant="caption" center>
-                  {finishLine}
-                </AppText>
-                <ErrorText center>{finishError}</ErrorText>
-                <Button label={task ? 'Finish' : 'Done'} silent disabled={finishing} onPress={finish} />
-              </View>
-            )
-          }
-        />
-      )}
+    <View style={styles.fill}>
+      {cards !== null && items.length > 1 ? (
+        <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.md }}>
+          {/* The Finish page counts as the end, so the bar is full there. */}
+          <ProgressBar value={page / (items.length - 1)} />
+        </View>
+      ) : null}
+      <View style={styles.fill} onLayout={onLayout}>
+        {cards === null || height === 0 ? (
+          <LoadingLine />
+        ) : (
+          <FlatList
+            ref={listRef}
+            data={items}
+            keyExtractor={(item) => item.key}
+            pagingEnabled
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            windowSize={21}
+            onScroll={onScroll}
+            onScrollBeginDrag={() => {
+              dragging.current = true;
+            }}
+            onScrollEndDrag={() => {
+              dragging.current = false;
+            }}
+            getItemLayout={(_, index) => ({ length: height, offset: height * index, index })}
+            viewabilityConfig={VIEWABILITY}
+            onViewableItemsChanged={onViewable}
+            renderItem={({ item, index }) =>
+              item.card ? (
+                <CardPage
+                  card={item.card}
+                  review={item.review}
+                  height={height}
+                  position={`${index + 1} of ${items.length - 1}`}
+                  onReplace={replace}
+                />
+              ) : (
+                <View style={[styles.finish, { height, padding: spacing.xl, gap: spacing.lg }]}>
+                  <AppText variant="caption" center>
+                    {finishLine}
+                  </AppText>
+                  <ErrorText center>{finishError}</ErrorText>
+                  <Button label={session ? 'Finish' : 'Done'} silent disabled={finishing} onPress={finish} />
+                </View>
+              )
+            }
+          />
+        )}
+      </View>
     </View>
   );
 }

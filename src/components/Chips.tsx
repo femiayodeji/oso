@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Pressable, StyleSheet, View } from 'react-native';
 
 import { TOUCH_TARGET, useTheme } from '../theme';
 import { AppText } from './AppText';
+import { usePressScale } from './motion/usePressScale';
 
 interface Option<T> {
   value: T;
@@ -17,38 +18,52 @@ interface Props<T> {
 
 // Plain text chips. Selection is shown with surface + weight, never with accent.
 export function Chips<T extends string | number>({ options, value, onChange, label }: Props<T>) {
-  const { colors, radius, spacing } = useTheme();
+  const { spacing } = useTheme();
   return (
     <View accessibilityRole="radiogroup" accessibilityLabel={label} style={[styles.row, { gap: spacing.sm }]}>
-      {options.map((option) => {
-        const selected = option.value === value;
-        return (
-          <Pressable
-            key={String(option.value)}
-            accessibilityRole="radio"
-            accessibilityState={{ selected }}
-            onPress={() => onChange(option.value)}
-            style={[
-              styles.chip,
-              {
-                borderRadius: radius.pill,
-                paddingHorizontal: spacing.lg,
-                borderColor: selected ? colors.text : colors.border,
-                backgroundColor: selected ? colors.surface : 'transparent',
-              },
-            ]}
-          >
-            <AppText variant={selected ? 'bodyStrong' : 'body'} color={selected ? 'text' : 'textMuted'} numberOfLines={1}>
-              {option.label}
-            </AppText>
-          </Pressable>
-        );
-      })}
+      {options.map((option) => (
+        <Chip
+          key={String(option.value)}
+          label={option.label}
+          selected={option.value === value}
+          onPress={() => onChange(option.value)}
+        />
+      ))}
     </View>
+  );
+}
+
+function Chip({ label, selected, onPress }: { label: string; selected: boolean; onPress: () => void }) {
+  const { colors, radius, spacing } = useTheme();
+  const squish = usePressScale();
+  return (
+    <Animated.View style={[styles.wrap, squish.style]}>
+      <Pressable
+        accessibilityRole="radio"
+        accessibilityState={{ selected }}
+        onPress={onPress}
+        onPressIn={squish.onPressIn}
+        onPressOut={squish.onPressOut}
+        style={[
+          styles.chip,
+          {
+            borderRadius: radius.pill,
+            paddingHorizontal: spacing.lg,
+            borderColor: selected ? colors.text : colors.border,
+            backgroundColor: selected ? colors.surface : 'transparent',
+          },
+        ]}
+      >
+        <AppText variant={selected ? 'bodyStrong' : 'body'} color={selected ? 'text' : 'textMuted'} numberOfLines={1}>
+          {label}
+        </AppText>
+      </Pressable>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', flexWrap: 'wrap' },
-  chip: { minHeight: TOUCH_TARGET, justifyContent: 'center', borderWidth: 1, maxWidth: '100%' },
+  wrap: { maxWidth: '100%' },
+  chip: { minHeight: TOUCH_TARGET, justifyContent: 'center', borderWidth: 1 },
 });

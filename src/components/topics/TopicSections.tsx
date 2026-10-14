@@ -2,24 +2,24 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { TOUCH_TARGET, useTheme } from '../../theme';
-import type { ChapterHead } from '../../db/chapters';
-import type { Task } from '../../types';
+import type { UnitHead } from '../../db/units';
+import type { Session } from '../../types';
 import { AppText } from '../AppText';
 
-export function ChapterList({ chapters }: { chapters: ChapterHead[] }) {
+export function UnitList({ units }: { units: UnitHead[] }) {
   const { spacing } = useTheme();
   return (
     <View style={{ gap: spacing.lg }}>
       <AppText variant="heading" accessibilityRole="header">
-        Chapters
+        Units
       </AppText>
-      {chapters.map((chapter) => (
-        <View key={chapter.id} style={{ gap: spacing.xs }}>
-          <AppText variant="bodyStrong">{chapter.title}</AppText>
-          {chapter.summary ? <AppText variant="body">{chapter.summary}</AppText> : null}
-          {chapter.genStatus === 'failed' ? (
+      {units.map((unit) => (
+        <View key={unit.id} style={{ gap: spacing.xs }}>
+          <AppText variant="bodyStrong">{unit.title}</AppText>
+          {unit.summary ? <AppText variant="body">{unit.summary}</AppText> : null}
+          {unit.genStatus === 'failed' ? (
             <AppText variant="caption" color="danger">
-              This chapter could not be prepared.
+              This unit could not be prepared.
             </AppText>
           ) : null}
         </View>
@@ -28,26 +28,26 @@ export function ChapterList({ chapters }: { chapters: ChapterHead[] }) {
   );
 }
 
-interface TaskPoolProps {
-  tasks: Task[];
-  onOpen: (task: Task) => void;
+interface SessionPoolProps {
+  sessions: Session[];
+  onOpen: (session: Session) => void;
 }
 
-// Ordered pool. Completed tasks are checked and inert; incomplete ones open in Today.
-export function TaskPool({ tasks, onOpen }: TaskPoolProps) {
+// Ordered pool. Completed sessions are checked and inert; incomplete ones open in Today.
+export function SessionPool({ sessions, onOpen }: SessionPoolProps) {
   const { colors, spacing } = useTheme();
   return (
     <View>
-      {tasks.map((task) => {
-        const done = task.completedAt != null;
+      {sessions.map((session) => {
+        const done = session.completedAt != null;
         return (
           <Pressable
-            key={task.id}
+            key={session.id}
             disabled={done}
             accessibilityRole="button"
-            accessibilityLabel={done ? `${task.title}, done` : `Read ${task.title}`}
-            onPress={() => onOpen(task)}
-            style={({ pressed }) => [styles.task, { gap: spacing.md, opacity: pressed ? 0.6 : 1 }]}
+            accessibilityLabel={done ? `${session.title}, done` : `Read ${session.title}`}
+            onPress={() => onOpen(session)}
+            style={({ pressed }) => [styles.session, { gap: spacing.md, opacity: pressed ? 0.6 : 1 }]}
           >
             <Ionicons
               name={done ? 'checkmark-circle' : 'ellipse-outline'}
@@ -55,7 +55,7 @@ export function TaskPool({ tasks, onOpen }: TaskPoolProps) {
               color={done ? colors.accent : colors.border}
             />
             <AppText variant="body" color={done ? 'textMuted' : 'text'} style={styles.title}>
-              {task.title}
+              {session.title}
             </AppText>
             {done ? null : <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />}
           </Pressable>
@@ -66,6 +66,6 @@ export function TaskPool({ tasks, onOpen }: TaskPoolProps) {
 }
 
 const styles = StyleSheet.create({
-  task: { flexDirection: 'row', alignItems: 'center', minHeight: TOUCH_TARGET },
+  session: { flexDirection: 'row', alignItems: 'center', minHeight: TOUCH_TARGET },
   title: { flex: 1 },
 });

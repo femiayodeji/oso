@@ -7,7 +7,7 @@ import { getSettings, updateSettings } from './settings';
 export async function listActiveDates(): Promise<string[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<{ date: string }>(
-    'SELECT date FROM daily_activity WHERE tasks_completed > 0 ORDER BY date',
+    'SELECT date FROM daily_activity WHERE sessions_completed > 0 ORDER BY date',
     [],
   );
   return rows.map((r) => r.date);

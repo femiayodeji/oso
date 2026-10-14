@@ -21,27 +21,27 @@ export function reminderCopy(kind: ReminderKind, tone: ReminderTone, streak: num
     return kind === 'evening'
       ? {
           title: 'Your streak dies tonight',
-          body: `You missed yesterday. Finish one task today or your ${streakLabel(streak)} resets.`,
+          body: `You missed yesterday. Finish one session today or your ${streakLabel(streak)} resets.`,
         }
       : {
           title: 'Last call. Your streak dies tonight',
-          body: `Your ${streakLabel(streak)} ends at midnight. One task saves it.`,
+          body: `Your ${streakLabel(streak)} ends at midnight. One session saves it.`,
         };
   }
 
   if (tone === 'calm' && hasStreak) {
     return kind === 'evening'
       ? {
-          title: 'Time to read',
+          title: 'Time to learn',
           body: `A few cards keep your ${streakLabel(streak)} going.`,
         }
       : {
           title: 'The day is running out',
-          body: `One short task keeps your ${streakLabel(streak)} going.`,
+          body: `One short session keeps your ${streakLabel(streak)} going.`,
         };
   }
 
   return kind === 'evening'
-    ? { title: 'Time to read', body: 'A few cards are waiting. One task starts a new streak.' }
-    : { title: 'The day is running out', body: 'There is still time for one short task.' };
+    ? { title: 'Time to learn', body: 'A few cards are waiting. One session starts a new streak.' }
+    : { title: 'The day is running out', body: 'There is still time for one short session.' };
 }

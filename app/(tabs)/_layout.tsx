@@ -25,7 +25,7 @@ export default function TabsLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: tabIcon('book-outline') }} />
-      <Tabs.Screen name="books" options={{ title: 'Books', tabBarIcon: tabIcon('library-outline') }} />
+      <Tabs.Screen name="topics" options={{ title: 'Topics', tabBarIcon: tabIcon('library-outline') }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: tabIcon('settings-outline') }} />
     </Tabs>
   );

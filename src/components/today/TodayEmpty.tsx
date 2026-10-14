@@ -1,22 +1,31 @@
+import { diffDays, todayLocal } from '../../lib/dates';
+import { pickSuggestions } from '../../topic/suggestions';
 import { EmptyState } from '../EmptyState';
-import { goToAddBook, goToBook, goToChat, goToSettings } from '../nav';
+import { goToAddTopic, goToTopic, goToChat, goToSettings } from '../nav';
 import { REVIEW_LABEL, type TodayData } from './todayData';
 
 // Every Today state that is not the feed: one mascot, one line, one button, routing to the next step.
 // `onReview` is passed only when recall cards are due; it adds a quiet "Review due cards" action.
 export function TodayEmpty({ data, onReview }: { data: TodayData; onReview?: () => void }) {
-  const { books, hasKey, preparing } = data;
+  const { topics, hasKey, preparing } = data;
   const review = onReview ? { secondaryLabel: REVIEW_LABEL, onSecondaryPress: onReview } : null;
+  const ideas = { suggestions: pickSuggestions(4, diffDays('2000-01-01', todayLocal())), onSuggest: goToAddTopic };
 
-  if (books.length === 0) {
+  if (topics.length === 0) {
     return hasKey ? (
-      <EmptyState mascot="noBooks" text="Nothing to read yet." buttonLabel="Add your first book" onPress={goToAddBook} />
+      <EmptyState
+        {...ideas}
+        mascot="noTopics"
+        text="What do you want to learn?"
+        buttonLabel="Start learning"
+        onPress={() => goToAddTopic()}
+      />
     ) : (
       <EmptyState mascot="reading" text="Add an API key to start." buttonLabel="Open Settings" onPress={goToSettings} />
     );
   }
 
-  const unplanned = books.find((b) => b.status === 'ready');
+  const unplanned = topics.find((b) => b.status === 'ready');
   if (unplanned) {
     return (
       <EmptyState
@@ -30,27 +39,27 @@ export function TodayEmpty({ data, onReview }: { data: TodayData; onReview?: () 
   }
 
   if (preparing) {
-    const { book, done, total } = preparing;
+    const { topic, done, total } = preparing;
     return (
       <EmptyState
         {...review}
         mascot="generating"
-        text={total > 0 ? `Preparing chapters, ${done} of ${total}` : 'Preparing chapters…'}
-        buttonLabel="View book"
-        onPress={() => goToBook(book.id)}
+        text={total > 0 ? `Preparing units, ${done} of ${total}` : 'Preparing units…'}
+        buttonLabel="View topic"
+        onPress={() => goToTopic(topic.id)}
       />
     );
   }
 
-  const failed = books.find((b) => b.status === 'failed');
+  const failed = topics.find((b) => b.status === 'failed');
   if (failed) {
     return (
       <EmptyState
         {...review}
         mascot="error"
         text={`${failed.title} could not be prepared.`}
-        buttonLabel="Open book"
-        onPress={() => goToBook(failed.id)}
+        buttonLabel="Open topic"
+        onPress={() => goToTopic(failed.id)}
       />
     );
   }
@@ -58,6 +67,11 @@ export function TodayEmpty({ data, onReview }: { data: TodayData; onReview?: () 
   return (
     <EmptyState
       {...review}
-      mascot="happy" text="You finished everything." buttonLabel="Pick your next book" onPress={goToAddBook} />
+      {...ideas}
+      mascot="happy"
+      text="You finished everything."
+      buttonLabel="Learn something new"
+      onPress={() => goToAddTopic()}
+    />
   );
 }

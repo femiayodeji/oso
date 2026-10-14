@@ -116,11 +116,11 @@ Leave it running; Ctrl+C stops it. The script:
 
 ## First run in the app
 
-1. **Settings**: paste an API key, pick the provider, and press **Test connection**.
-2. **Add a book**: a title is enough; attach the text for better accuracy.
-3. Wait for "Preparing chapters, X of Y" to finish.
+1. **Settings**: pick a provider from the dropdown, paste its API key, and press **Test connection**. Keys for other providers can be added the same way; each is kept.
+2. **New topic**: type what you want to learn (or tap a suggestion), pick a depth, and press **Start learning**. Attaching your own material is optional.
+3. Wait for "Preparing units, X of Y" to finish.
 4. **Chat**: say how many days you want to finish in.
-5. **Today**: read the first task.
+5. **Today**: swipe through the first session.
 
 Free providers work for trying the app: OpenRouter's default model is free, and Gemini and Groq have free tiers.
 
@@ -164,8 +164,11 @@ They make real, billable calls and are skipped without `OSO_LIVE=1`.
 These cannot be covered by unit tests and need a real device:
 
 - Reminders fire at the set times.
-- Today's reminders are cancelled after completing a task.
+- Today's reminders are cancelled after completing a session.
 - Reminders are rescheduled when the app is reopened.
-- Reading, the streak and review all work in airplane mode.
+- Studying, quiz answers, the streak and review all work in airplane mode.
 - Closing the app mid-generation and reopening it resumes where it stopped.
+- Switching provider keeps each provider's key and model.
+- Animations: button lip, feed progress bar, quiz right and wrong feedback, confetti and streak jump on finishing, chat typing dots.
+- With the system "reduce motion" (Android: Remove animations) setting on, all of that goes still.
 - On Xiaomi, Tecno or Infinix phones, check that battery optimisation does not delay reminders.

@@ -69,9 +69,9 @@ export function parseModelList(data: unknown): ModelOption[] {
 }
 
 export async function listModels(): Promise<ModelOption[]> {
-  const apiKey = await getApiKey();
-  if (!apiKey) throw new LlmError('no_key');
   const settings = await getSettings();
+  const apiKey = await getApiKey(settings.provider);
+  if (!apiKey) throw new LlmError('no_key');
   const anthropic = settings.provider === 'anthropic';
   const data = await getJson(`${resolveBaseUrl(settings)}/models${anthropic ? '?limit=1000' : ''}`, {
     headers: anthropic

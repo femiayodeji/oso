@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { playSound } from '../sound';
 import { TOUCH_TARGET, useTheme } from '../theme';
 import { AppText } from './AppText';
+import { usePressScale } from './motion/usePressScale';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -18,9 +19,13 @@ interface ButtonProps {
   style?: StyleProp<ViewStyle>;
 }
 
+// Primary and secondary buttons sit on a darker lip and sink into it when pressed.
+const LIP = 4;
+
 export function Button({ label, onPress, variant = 'primary', disabled, silent, style }: ButtonProps) {
   const { colors, radius, spacing } = useTheme();
   const primary = variant === 'primary';
+  const lipped = variant !== 'quiet' && !disabled;
   const press = () => {
     if (primary && !silent) playSound('click');
     onPress();
@@ -34,14 +39,17 @@ export function Button({ label, onPress, variant = 'primary', disabled, silent, 
       style={({ pressed }) => [
         styles.button,
         { borderRadius: radius.md, paddingHorizontal: spacing.xl },
-        primary && { backgroundColor: colors.accent },
+        primary && { backgroundColor: colors.accent, borderColor: colors.accentShade },
         variant === 'secondary' && {
           backgroundColor: colors.surface,
           borderColor: colors.border,
           borderWidth: StyleSheet.hairlineWidth * 2,
         },
+        // The lip and the top margin add up to the same height, so pressing never shifts layout.
+        lipped && (pressed ? { marginTop: LIP, borderBottomWidth: 0 } : { borderBottomWidth: LIP }),
         variant === 'quiet' && { paddingHorizontal: spacing.sm },
-        (pressed || disabled) && styles.dim,
+        disabled && styles.dim,
+        variant === 'quiet' && pressed && styles.dim,
         style,
       ]}
     >
@@ -62,17 +70,22 @@ interface IconButtonProps {
 
 export function IconButton({ icon, label, onPress, size = 22, disabled }: IconButtonProps) {
   const { colors } = useTheme();
+  const squish = usePressScale(0.85);
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      disabled={disabled}
-      hitSlop={4}
-      onPress={onPress}
-      style={({ pressed }) => [styles.icon, (pressed || disabled) && styles.dim]}
-    >
-      <Ionicons name={icon} size={size} color={colors.textMuted} />
-    </Pressable>
+    <Animated.View style={squish.style}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        disabled={disabled}
+        hitSlop={4}
+        onPress={onPress}
+        onPressIn={squish.onPressIn}
+        onPressOut={squish.onPressOut}
+        style={[styles.icon, disabled && styles.dim]}
+      >
+        <Ionicons name={icon} size={size} color={colors.textMuted} />
+      </Pressable>
+    </Animated.View>
   );
 }
 

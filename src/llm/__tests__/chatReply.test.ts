@@ -2,7 +2,7 @@ import { parseChatReply } from '../chatReply';
 
 describe('parseChatReply', () => {
   it('returns plain text untouched with no action', () => {
-    expect(parseChatReply('The chapter is about habits.')).toEqual({ text: 'The chapter is about habits.' });
+    expect(parseChatReply('The unit is about habits.')).toEqual({ text: 'The unit is about habits.' });
   });
 
   it('extracts a trailing set_plan action and hides it', () => {
@@ -30,7 +30,7 @@ describe('parseChatReply', () => {
     '{"action":"set_plan","days":0}',
     '{"action":"set_plan","days":2.5}',
     '{"action":"set_plan","days":5000}',
-    '{"action":"delete_book","days":5}',
+    '{"action":"delete_topic","days":5}',
     '{"action":"set_plan"}',
   ])('rejects invalid action %s but still hides it', (json) => {
     const out = parseChatReply(`Okay.\n${json}`);
@@ -39,7 +39,7 @@ describe('parseChatReply', () => {
   });
 
   it('leaves unrelated JSON in the text', () => {
-    const raw = 'An example object is {"name":"x"} in the book.';
+    const raw = 'An example object is {"name":"x"} in the topic.';
     expect(parseChatReply(raw)).toEqual({ text: raw });
   });
 

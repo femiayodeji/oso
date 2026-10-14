@@ -1,6 +1,6 @@
 import { addDays } from '../lib/dates';
 
-// Leitner boxes 1..5. Box 0 means "not in review yet" (task not completed).
+// Leitner boxes 1..5. Box 0 means "not in review yet" (session not completed).
 export const MAX_BOX = 5;
 export const BOX_INTERVAL_DAYS: Record<number, number> = { 1: 1, 2: 3, 3: 7, 4: 14, 5: 30 };
 
@@ -13,7 +13,7 @@ function schedule(box: number, today: string): ReviewSchedule {
   return { box, dueDate: addDays(today, BOX_INTERVAL_DAYS[box]) };
 }
 
-// A card enters review when its task is completed.
+// A card enters review when its session is completed.
 export function initialReview(today: string): ReviewSchedule {
   return schedule(1, today);
 }

@@ -6,19 +6,12 @@ import { describeLlmError } from '../../llm/errors';
 import { PROVIDERS } from '../../llm/providers';
 import { useSettings } from '../../settings/SettingsContext';
 import { useTheme } from '../../theme';
-import type { Provider } from '../../types';
 import { AppText, ErrorText } from '../AppText';
 import { Button } from '../Button';
-import { Chips } from '../Chips';
 import { Mascot } from '../Mascot';
 import { TextField } from '../TextField';
 import { ModelPicker } from './ModelPicker';
 import { Section } from './Section';
-
-const PROVIDER_OPTIONS = (Object.keys(PROVIDERS) as Provider[]).map((value) => ({
-  value,
-  label: PROVIDERS[value].label,
-}));
 
 type TestState = { kind: 'idle' | 'running' | 'ok' } | { kind: 'failed'; message: string };
 
@@ -29,6 +22,7 @@ export function ModelSection({ hasKey }: { hasKey: boolean }) {
   const [test, setTest] = useState<TestState>({ kind: 'idle' });
 
   useEffect(() => setBaseUrl(settings.baseUrl), [settings.baseUrl]);
+  useEffect(() => setTest({ kind: 'idle' }), [settings.provider]);
 
   const save = (patch: Parameters<typeof update>[0]) => {
     setTest({ kind: 'idle' });
@@ -49,12 +43,6 @@ export function ModelSection({ hasKey }: { hasKey: boolean }) {
 
   return (
     <Section title="Model">
-      <Chips
-        label="Provider"
-        options={PROVIDER_OPTIONS}
-        value={settings.provider}
-        onChange={(provider) => save({ provider, baseUrl: PROVIDERS[provider].baseUrl, model: '' })}
-      />
       {settings.provider === 'anthropic' ? null : (
         <TextField
           label="Base URL (OpenAI-compatible)"

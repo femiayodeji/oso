@@ -2,7 +2,7 @@ import { Image, type ImageSourcePropType, type ImageStyle, type StyleProp } from
 
 export type MascotState =
   | 'reading'
-  | 'noBooks'
+  | 'noTopics'
   | 'generating'
   | 'chat'
   | 'thinking'
@@ -13,7 +13,7 @@ export type MascotState =
 
 const SOURCES: Record<MascotState, ImageSourcePropType> = {
   reading: require('../../assets/mascot/reading.png'),
-  noBooks: require('../../assets/mascot/noBooks.png'),
+  noTopics: require('../../assets/mascot/noTopics.png'),
   generating: require('../../assets/mascot/generating.png'),
   chat: require('../../assets/mascot/chat.png'),
   thinking: require('../../assets/mascot/thinking.png'),
@@ -24,13 +24,13 @@ const SOURCES: Record<MascotState, ImageSourcePropType> = {
 };
 
 const LABELS: Record<MascotState, string> = {
-  reading: 'Panda reading a book',
-  noBooks: 'Panda looking at a small stack of books',
+  reading: 'Panda reading a topic',
+  noTopics: 'Panda looking at a small stack of topics',
   generating: 'Panda dozing at a laptop',
   chat: 'Panda chatting on a phone',
   thinking: 'Panda thinking',
-  happy: 'Happy panda with a book',
-  completed: 'Content panda holding a finished book',
+  happy: 'Happy panda with a topic',
+  completed: 'Content panda holding a finished topic',
   reminder: 'Panda next to a bell',
   error: 'Sad panda',
 };

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Resizes mascot masters into the @1x/@2x/@3x files the app loads.
 #   scripts/build-mascots.sh <folder-of-masters>
-# Masters: square, transparent PNGs named after the state (reading, noBooks, generating, chat,
+# Masters: square, transparent PNGs named after the state (reading, noTopics, generating, chat,
 # thinking, happy, completed, reminder, error) plus pandaIcon. See "Asset dimensions" in CLAUDE.md.
 set -euo pipefail
 
@@ -16,7 +16,7 @@ resize() { # <input> <name> <base size in px>
   done
 }
 
-for state in reading noBooks generating chat thinking happy completed reminder error; do
+for state in reading noTopics generating chat thinking happy completed reminder error; do
   [ -f "$src/$state.png" ] && resize "$src/$state.png" "$state" 160 && echo "$state"
 done
 [ -f "$src/pandaIcon.png" ] && resize "$src/pandaIcon.png" pandaIcon 48 && echo pandaIcon

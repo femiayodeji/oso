@@ -1,3 +1,1 @@
-- i should be able to add multiple providers and select active.
-- The subject to learn may not be a particular book, it may be a topic and it can be broken down same way the book can be broken down. It should be flexible, 
 - after generating enough content to start like 30% of the subject, the rest of the generation or preparation of the content can be done in the background unless been viewed or requested

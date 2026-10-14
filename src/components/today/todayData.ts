@@ -1,61 +1,61 @@
 import { getStreak } from '../../db/activity';
-import { getBook, listBooks } from '../../db/books';
-import { listCardsForBook, listDueReviewCards } from '../../db/cards';
-import { getChapterProgress } from '../../db/chapters';
-import { getTask, listNextTasks, listTasks, type TaskWithBook } from '../../db/tasks';
+import { getTopic, listTopics } from '../../db/topics';
+import { listCardsForTopic, listDueReviewCards } from '../../db/cards';
+import { getUnitProgress } from '../../db/units';
+import { getSession, listNextSessions, listSessions, type SessionWithTopic } from '../../db/sessions';
 import { todayLocal } from '../../lib/dates';
 import { hasApiKey } from '../../llm/apiKey';
-import type { Book, StreakInfo } from '../../types';
+import type { Topic, StreakInfo } from '../../types';
 
-export interface ActiveTask {
+export interface ActiveSession {
   id: number;
-  bookId: number;
+  topicId: number;
   title: string;
-  bookTitle: string;
+  topicTitle: string;
 }
 
 export const REVIEW_LABEL = 'Review due cards';
 
 export interface TodayData {
   hasKey: boolean;
-  books: Book[];
-  nextTasks: TaskWithBook[];
+  topics: Topic[];
+  nextSessions: SessionWithTopic[];
   streak: StreakInfo;
-  // Chapter progress of the first book still being prepared, if any.
-  preparing: { book: Book; done: number; total: number } | null;
-  // Whether any recall card from a completed task is due today.
+  // Unit progress of the first topic still being prepared, if any.
+  preparing: { topic: Topic; done: number; total: number } | null;
+  // Whether any recall card from a completed session is due today.
   hasDueReviews: boolean;
 }
 
 export interface Recap {
-  bookTitle: string;
-  tasks: number;
+  topicTitle: string;
+  sessions: number;
   cards: number;
 }
 
 export async function loadToday(): Promise<TodayData> {
-  const [hasKey, books, nextTasks, streak, due] = await Promise.all([
+  const [hasKey, topics, nextSessions, streak, due] = await Promise.all([
     hasApiKey(),
-    listBooks(),
-    listNextTasks(),
+    listTopics(),
+    listNextSessions(),
     getStreak(),
     listDueReviewCards(todayLocal(), { limit: 1 }),
   ]);
-  const pending = books.find((b) => b.status === 'generating' || b.status === 'draft');
-  const preparing = pending ? { book: pending, ...(await getChapterProgress(pending.id)) } : null;
-  return { hasKey, books, nextTasks, streak, preparing, hasDueReviews: due.length > 0 };
+  const pending = topics.find((b) => b.status === 'generating' || b.status === 'draft');
+  const preparing = pending ? { topic: pending, ...(await getUnitProgress(pending.id)) } : null;
+  return { hasKey, topics, nextSessions, streak, preparing, hasDueReviews: due.length > 0 };
 }
 
-// A task opened from the book screen. Completed or missing tasks are ignored.
-export async function loadTaskById(taskId: number): Promise<ActiveTask | null> {
-  const task = await getTask(taskId);
-  if (!task || task.completedAt) return null;
-  const book = await getBook(task.bookId);
-  if (!book) return null;
-  return { id: task.id, bookId: task.bookId, title: task.title, bookTitle: book.title };
+// A session opened from the topic screen. Completed or missing sessions are ignored.
+export async function loadSessionById(sessionId: number): Promise<ActiveSession | null> {
+  const session = await getSession(sessionId);
+  if (!session || session.completedAt) return null;
+  const topic = await getTopic(session.topicId);
+  if (!topic) return null;
+  return { id: session.id, topicId: session.topicId, title: session.title, topicTitle: topic.title };
 }
 
-export async function loadRecap(bookId: number, bookTitle: string): Promise<Recap> {
-  const [tasks, cards] = await Promise.all([listTasks(bookId), listCardsForBook(bookId)]);
-  return { bookTitle, tasks: tasks.length, cards: cards.length };
+export async function loadRecap(topicId: number, topicTitle: string): Promise<Recap> {
+  const [sessions, cards] = await Promise.all([listSessions(topicId), listCardsForTopic(topicId)]);
+  return { topicTitle, sessions: sessions.length, cards: cards.length };
 }

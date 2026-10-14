@@ -1,12 +1,12 @@
 import { chatSystemPrompt, type ChatContext } from '../prompts';
 
 const base: ChatContext = {
-  book: { title: 'Deep Work', author: 'Cal Newport', source: 'model_knowledge', planDays: null },
-  chapters: [{ idx: 0, title: 'Deep Work Is Valuable', summary: 'Why focus matters.' }],
+  topic: { title: 'Deep Work', author: 'Cal Newport', source: 'model_knowledge', planDays: null },
+  units: [{ idx: 0, title: 'Deep Work Is Valuable', summary: 'Why focus matters.' }],
   cardsReady: true,
   cardCount: 40,
-  tasksTotal: 0,
-  tasksCompleted: 0,
+  sessionsTotal: 0,
+  sessionsCompleted: 0,
 };
 
 describe('chatSystemPrompt plan wording', () => {
@@ -16,18 +16,18 @@ describe('chatSystemPrompt plan wording', () => {
     expect(prompt).toContain('never the total length of the plan');
   });
 
-  it('reports the plan total, the completed tasks and the days left', () => {
+  it('reports the plan total, the completed sessions and the days left', () => {
     const prompt = chatSystemPrompt({
       ...base,
-      book: { ...base.book, planDays: 8 },
-      tasksTotal: 8,
-      tasksCompleted: 5,
+      topic: { ...base.topic, planDays: 8 },
+      sessionsTotal: 8,
+      sessionsCompleted: 5,
     });
     expect(prompt).toContain('Current plan: 8 days in total.');
-    expect(prompt).toContain('5 of 8 daily tasks are completed, so 3 days are left.');
+    expect(prompt).toContain('5 of 8 daily sessions are completed, so 3 days are left.');
   });
 
-  it('says a plan cannot be set while the book is not ready', () => {
+  it('says a plan cannot be set while the topic is not ready', () => {
     const prompt = chatSystemPrompt({ ...base, cardsReady: false });
     expect(prompt).toContain('a plan cannot be set yet');
     expect(prompt).toContain('do not emit the action');

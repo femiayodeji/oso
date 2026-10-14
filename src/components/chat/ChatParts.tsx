@@ -40,7 +40,7 @@ export function Composer({ value, onChangeText, onSend, disabled, inputRef }: Co
         ref={inputRef}
         value={value}
         onChangeText={onChangeText}
-        placeholder="Ask about the book or set a plan"
+        placeholder="Ask about the topic or set a plan"
         placeholderTextColor={colors.textMuted}
         accessibilityLabel="Message"
         multiline

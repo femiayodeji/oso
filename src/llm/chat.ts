@@ -1,8 +1,8 @@
-import { getBook } from '../db/books';
-import { listCardsForBook } from '../db/cards';
-import { listChapterHeads } from '../db/chapters';
+import { getTopic } from '../db/topics';
+import { listCardsForTopic } from '../db/cards';
+import { listUnitHeads } from '../db/units';
 import { addChatMessage, listChatMessages } from '../db/chat';
-import { listTasks } from '../db/tasks';
+import { listSessions } from '../db/sessions';
 import { applyPlan } from '../plan/applyPlan';
 import { hasApiKey } from './apiKey';
 import { parseChatReply } from './chatReply';
@@ -10,9 +10,9 @@ import { complete, type LlmMessage } from './client';
 import { LlmError } from './errors';
 import { CHAT_FALLBACKS, chatSystemPrompt } from './prompts';
 
-// `days` is the number of days remaining that the reader asked for. `taskCount` is the
-// book's total number of tasks afterwards, `completedCount` of which were already done.
-export type ChatAction = { type: 'set_plan'; days: number; taskCount: number; completedCount: number };
+// `days` is the number of days remaining that the reader asked for. `sessionCount` is the
+// topic's total number of sessions afterwards, `completedCount` of which were already done.
+export type ChatAction = { type: 'set_plan'; days: number; sessionCount: number; completedCount: number };
 
 const HISTORY_LIMIT = 12;
 
@@ -23,31 +23,31 @@ function toHistory(messages: { role: 'user' | 'assistant'; content: string }[]):
 }
 
 export async function sendChatMessage(
-  bookId: number,
+  topicId: number,
   text: string,
 ): Promise<{ reply: string; action?: ChatAction }> {
   if (!(await hasApiKey())) throw new LlmError('no_key');
-  const book = await getBook(bookId);
-  if (!book) throw new LlmError('bad_response', 'This book no longer exists.');
+  const topic = await getTopic(topicId);
+  if (!topic) throw new LlmError('bad_response', 'This topic no longer exists.');
 
-  const [chapters, cards, tasks, previous] = await Promise.all([
-    listChapterHeads(bookId),
-    listCardsForBook(bookId),
-    listTasks(bookId),
-    listChatMessages(bookId, HISTORY_LIMIT),
+  const [units, cards, sessions, previous] = await Promise.all([
+    listUnitHeads(topicId),
+    listCardsForTopic(topicId),
+    listSessions(topicId),
+    listChatMessages(topicId, HISTORY_LIMIT),
   ]);
-  // A failed or half-prepared book has cards too, but its content is incomplete.
-  const cardsReady = cards.length > 0 && (book.status === 'ready' || book.status === 'finished');
-  await addChatMessage(bookId, 'user', text);
+  // A failed or half-prepared topic has cards too, but its content is incomplete.
+  const cardsReady = cards.length > 0 && (topic.status === 'ready' || topic.status === 'finished');
+  await addChatMessage(topicId, 'user', text);
 
   const raw = await complete({
     system: chatSystemPrompt({
-      book,
-      chapters,
+      topic,
+      units,
       cardsReady,
       cardCount: cards.length,
-      tasksTotal: tasks.length,
-      tasksCompleted: tasks.filter((t) => t.completedAt !== null).length,
+      sessionsTotal: sessions.length,
+      sessionsCompleted: sessions.filter((t) => t.completedAt !== null).length,
     }),
     messages: [...toHistory(previous), { role: 'user', content: text }],
   });
@@ -57,8 +57,8 @@ export async function sendChatMessage(
   let action: ChatAction | undefined;
 
   if (parsed.action && cardsReady) {
-    const { taskCount, completedCount } = await applyPlan(bookId, parsed.action.days);
-    action = { type: 'set_plan', days: parsed.action.days, taskCount, completedCount };
+    const { sessionCount, completedCount } = await applyPlan(topicId, parsed.action.days);
+    action = { type: 'set_plan', days: parsed.action.days, sessionCount, completedCount };
     reply = reply || CHAT_FALLBACKS.planSet(parsed.action.days);
   } else if (parsed.action) {
     // The model's text may claim the plan was set; it was not, so say what is true.
@@ -66,6 +66,6 @@ export async function sendChatMessage(
   }
   reply = reply || CHAT_FALLBACKS.empty;
 
-  await addChatMessage(bookId, 'assistant', reply);
+  await addChatMessage(topicId, 'assistant', reply);
   return action ? { reply, action } : { reply };
 }

@@ -2,19 +2,19 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Alert, View } from 'react-native';
 
-import { deleteBook } from '../../db/books';
-import { deleteBookFile } from '../../llm/bookText';
+import { deleteTopic } from '../../db/topics';
+import { deleteSourceFile } from '../../llm/sourceText';
 import { isNoKeyError } from '../../llm/errors';
-import { isGenerating, regenerateBook } from '../../llm/pipeline';
+import { isGenerating, regenerateTopic } from '../../llm/pipeline';
 import { useTheme } from '../../theme';
-import type { Book } from '../../types';
+import type { Topic } from '../../types';
 import { AppText, ErrorText } from '../AppText';
 import { Button } from '../Button';
 import { goToSettings } from '../nav';
 import { errorMessage } from '../useFocusLoad';
-import { pickBookFile, type PickedFile } from './bookData';
+import { pickSourceFile, type PickedFile } from './topicData';
 
-const RESET_WARNING = 'This replaces the chapters, cards and tasks of this book. Your streak is kept.';
+const RESET_WARNING = 'This replaces the units, cards and sessions of this topic. Your streak is kept.';
 
 function confirm(title: string, message: string, action: string, onConfirm: () => void) {
   Alert.alert(title, message, [
@@ -24,17 +24,17 @@ function confirm(title: string, message: string, action: string, onConfirm: () =
 }
 
 interface Props {
-  book: Book;
+  topic: Topic;
   onChanged: () => void;
 }
 
-export function BookActions({ book, onChanged }: Props) {
+export function TopicActions({ topic, onChanged }: Props) {
   const { spacing } = useTheme();
   const [error, setError] = useState<string | null>(null);
 
   const regenerate = (file?: PickedFile) => {
     setError(null);
-    regenerateBook(book.id, file ? { fileUri: file.uri, fileName: file.name } : undefined)
+    regenerateTopic(topic.id, file ? { fileUri: file.uri, fileName: file.name } : undefined)
       .catch((e: unknown) => {
         if (isNoKeyError(e)) goToSettings();
         else setError(errorMessage(e));
@@ -46,7 +46,7 @@ export function BookActions({ book, onChanged }: Props) {
   const attach = async () => {
     setError(null);
     try {
-      const file = await pickBookFile();
+      const file = await pickSourceFile();
       if (file) confirm(`Regenerate from ${file.name}?`, RESET_WARNING, 'Regenerate', () => regenerate(file));
     } catch (e) {
       setError(errorMessage(e));
@@ -54,25 +54,25 @@ export function BookActions({ book, onChanged }: Props) {
   };
 
   const remove = () =>
-    confirm(`Delete ${book.title}?`, 'Its chapters, cards and tasks are removed. Your streak is kept.', 'Delete', () => {
-      deleteBook(book.id)
+    confirm(`Delete ${topic.title}?`, 'Its units, cards and sessions are removed. Your streak is kept.', 'Delete', () => {
+      deleteTopic(topic.id)
         .then(() => {
-          deleteBookFile(book.fileUri);
+          deleteSourceFile(topic.fileUri);
           router.back();
         })
         .catch((e: unknown) => setError(errorMessage(e)));
     });
 
-  // Busy only while work is really running: an interrupted book (status 'generating',
+  // Busy only while work is really running: an interrupted topic (status 'generating',
   // nothing running) can still be regenerated or deleted.
-  const busy = isGenerating(book.id);
+  const busy = isGenerating(topic.id);
 
   return (
     <View style={{ gap: spacing.sm }}>
       <ErrorText>{error}</ErrorText>
-      {busy && book.status !== 'generating' ? <AppText variant="caption">Preparing the new version…</AppText> : null}
+      {busy && topic.status !== 'generating' ? <AppText variant="caption">Preparing the new version…</AppText> : null}
       <Button
-        label={book.source === 'uploaded' ? 'Replace file and regenerate' : 'Attach a file and regenerate'}
+        label={topic.source === 'uploaded' ? 'Replace file and regenerate' : 'Attach a file and regenerate'}
         variant="secondary"
         disabled={busy}
         onPress={attach}
@@ -81,9 +81,9 @@ export function BookActions({ book, onChanged }: Props) {
         label="Regenerate"
         variant="secondary"
         disabled={busy}
-        onPress={() => confirm('Regenerate this book?', RESET_WARNING, 'Regenerate', () => regenerate())}
+        onPress={() => confirm('Regenerate this topic?', RESET_WARNING, 'Regenerate', () => regenerate())}
       />
-      <Button label="Delete book" variant="quiet" disabled={busy} onPress={remove} />
+      <Button label="Delete topic" variant="quiet" disabled={busy} onPress={remove} />
     </View>
   );
 }

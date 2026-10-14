@@ -1,7 +1,7 @@
 import { AppText } from '../../src/components/AppText';
 import { Button } from '../../src/components/Button';
 import { Chips } from '../../src/components/Chips';
-import { goToAddBook } from '../../src/components/nav';
+import { goToAddTopic } from '../../src/components/nav';
 import { ErrorLine, LoadingLine, Screen } from '../../src/components/Screen';
 import { ApiKeySection } from '../../src/components/settings/ApiKeySection';
 import { ModelSection } from '../../src/components/settings/ModelSection';
@@ -9,9 +9,9 @@ import { ReminderSection } from '../../src/components/settings/ReminderSection';
 import { Section } from '../../src/components/settings/Section';
 import { useFocusLoad } from '../../src/components/useFocusLoad';
 import { getStreak } from '../../src/db/activity';
-import { listBooks } from '../../src/db/books';
+import { listTopics } from '../../src/db/topics';
 import { getSettings } from '../../src/db/settings';
-import { hasApiKey } from '../../src/llm/apiKey';
+import { providersWithKey } from '../../src/llm/apiKey';
 import { getPermissionStatus } from '../../src/notifications';
 import { useSettings } from '../../src/settings/SettingsContext';
 import type { ColorSchemeSetting } from '../../src/types';
@@ -30,13 +30,13 @@ const SOUNDS = [
 async function loadSettingsScreen() {
   // getStreak persists a new best streak, so it runs before the settings read.
   await getStreak().catch(() => null);
-  const [hasKey, permission, stored, books] = await Promise.all([
-    hasApiKey(),
+  const [savedProviders, permission, stored, topics] = await Promise.all([
+    providersWithKey(),
     getPermissionStatus().catch(() => null),
     getSettings(),
-    listBooks(),
+    listTopics(),
   ]);
-  return { hasKey, permission, bestStreak: stored.bestStreak, noBooks: books.length === 0 };
+  return { savedProviders, permission, bestStreak: stored.bestStreak, noTopics: topics.length === 0 };
 }
 
 export default function SettingsScreen() {
@@ -49,6 +49,7 @@ export default function SettingsScreen() {
   if (!data) {
     return <Screen>{loading ? <LoadingLine /> : <ErrorLine text={error ?? 'Could not load settings.'} />}</Screen>;
   }
+  const hasKey = data.savedProviders.includes(settings.provider);
 
   return (
     <Screen scroll keyboard>
@@ -56,9 +57,9 @@ export default function SettingsScreen() {
         Settings
       </AppText>
 
-      <ApiKeySection hasKey={data.hasKey} onChanged={() => void reload()} />
-      {data.hasKey && data.noBooks ? <Button label="Add your first book" variant="secondary" onPress={goToAddBook} /> : null}
-      <ModelSection hasKey={data.hasKey} />
+      <ApiKeySection savedProviders={data.savedProviders} onChanged={() => void reload()} />
+      {hasKey && data.noTopics ? <Button label="Add your first topic" variant="secondary" onPress={() => goToAddTopic()} /> : null}
+      <ModelSection hasKey={hasKey} />
       <ReminderSection permission={data.permission} onPermissionChanged={() => void reload()} />
 
       <Section title="Appearance">
@@ -81,7 +82,7 @@ export default function SettingsScreen() {
 
       <AppText variant="caption">{`Best streak: ${data.bestStreak}`}</AppText>
       <AppText variant="caption" center style={{ paddingTop: 24 }}>
-        Better books. A calmer mind.
+        Better topics. A calmer mind.
       </AppText>
     </Screen>
   );

@@ -58,6 +58,26 @@ export async function getSettings(): Promise<AppSettings> {
   return parse(new Map(rows.map((r) => [r.key, r.value])));
 }
 
+// The topic last read on Today, so the tab opens on it again. Kept out of AppSettings: it is
+// app state, not a preference.
+const LAST_TOPIC_KEY = 'lastTopicId';
+
+export async function getLastTopicId(): Promise<number | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ value: string }>('SELECT value FROM settings WHERE key = ?', [LAST_TOPIC_KEY]);
+  const id = Number(row?.value);
+  return Number.isInteger(id) && id > 0 ? id : null;
+}
+
+export async function setLastTopicId(topicId: number): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    `INSERT INTO settings (key, value) VALUES (?, ?)
+     ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+    [LAST_TOPIC_KEY, String(topicId)],
+  );
+}
+
 // A model or base URL in the patch belongs to the patch's provider, else the stored one.
 export async function updateSettings(patch: Partial<AppSettings>): Promise<AppSettings> {
   const provider = patch.provider ?? (await getSettings()).provider;

@@ -133,9 +133,10 @@ export async function setCardFlagged(id: number, flagged: boolean): Promise<void
 }
 
 // Recall and quiz cards from completed sessions that are due, most overdue first.
+// Pass topicId to keep the review within one topic.
 export async function listDueReviewCards(
   today: string,
-  opts?: { excludeSessionId?: number; limit?: number },
+  opts?: { excludeSessionId?: number; topicId?: number; limit?: number },
 ): Promise<Card[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<CardRow>(
@@ -146,9 +147,16 @@ export async function listDueReviewCards(
        AND c.due_date IS NOT NULL
        AND c.due_date <= ?
        AND c.session_id IS NOT ?
+       AND (? IS NULL OR c.topic_id = ?)
      ORDER BY c.due_date, c.id
      LIMIT ?`,
-    [today, opts?.excludeSessionId ?? null, opts?.limit ?? DEFAULT_REVIEW_LIMIT],
+    [
+      today,
+      opts?.excludeSessionId ?? null,
+      opts?.topicId ?? null,
+      opts?.topicId ?? null,
+      opts?.limit ?? DEFAULT_REVIEW_LIMIT,
+    ],
   );
   return rows.map(toCard);
 }

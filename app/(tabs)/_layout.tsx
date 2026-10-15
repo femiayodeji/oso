@@ -24,8 +24,8 @@ export default function TabsLayout() {
         sceneStyle: { backgroundColor: colors.background },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: tabIcon('book-outline') }} />
-      <Tabs.Screen name="topics" options={{ title: 'Topics', tabBarIcon: tabIcon('library-outline') }} />
+      <Tabs.Screen name="index" options={{ title: 'Today', tabBarIcon: tabIcon('sunny-outline') }} />
+      <Tabs.Screen name="topics" options={{ title: 'Topics', tabBarIcon: tabIcon('grid-outline') }} />
       <Tabs.Screen name="settings" options={{ title: 'Settings', tabBarIcon: tabIcon('settings-outline') }} />
     </Tabs>
   );

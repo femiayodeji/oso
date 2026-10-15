@@ -101,6 +101,16 @@ async function runSync(): Promise<void> {
   }
 }
 
+// TEMPORARY: lets the user check how a reminder looks (icon, copy) without waiting for the
+// evening. Remove with the button in ReminderSection.
+export async function sendTestReminder(): Promise<void> {
+  await ensureChannel();
+  await Notifications.scheduleNotificationAsync({
+    content: { title: 'Time for a few cards', body: 'This is a test reminder from Oso.' },
+    trigger: { type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 5, channelId: CHANNEL_ID },
+  });
+}
+
 let queue: Promise<void> = Promise.resolve();
 
 // Calls are serialized so an app-open sync and a session-completion sync cannot interleave

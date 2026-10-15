@@ -17,8 +17,10 @@ import {
   REVIEW_LABEL,
   type ActiveSession,
   type Recap,
+  type TodayData,
 } from '../../src/components/today/todayData';
 import { useFocusLoad } from '../../src/components/useFocusLoad';
+import { setLastTopicId } from '../../src/db/settings';
 import { subscribeGeneration } from '../../src/llm/pipeline';
 import { TopicBadge } from '../../src/components/TopicBadge';
 import { useTheme } from '../../src/theme';
@@ -77,12 +79,21 @@ export default function TodayScreen() {
     };
   }, [data, pickedId]);
 
+  // Whatever topic is being read becomes the one Today opens on next time, whether it was
+  // chosen with the chips or opened from the topic screen.
+  const next = data ? nextFor(data, topicId) : undefined;
+  const readingTopicId = picked?.topicId ?? (data && next && (!data.streak.doneToday || readAhead) ? next.topicId : null);
+  useEffect(() => {
+    if (readingTopicId == null) return;
+    setTopicId(readingTopicId);
+    setLastTopicId(readingTopicId).catch(() => {});
+  }, [readingTopicId]);
+
   if (!data) {
     return <Screen padded={false}>{loading ? <LoadingLine /> : <ErrorLine text={error ?? 'Could not load.'} />}</Screen>;
   }
 
   const { nextSessions, streak, topics, hasDueReviews } = data;
-  const next = nextSessions.find((t) => t.topicId === topicId) ?? nextSessions[0];
   const active: ActiveSession | null = picked ?? next ?? null;
   const reading = active != null && (picked != null || !streak.doneToday || readAhead);
   const chatTopicId = active?.topicId ?? topics[0]?.id;
@@ -188,4 +199,10 @@ export default function TodayScreen() {
       {body}
     </Screen>
   );
+}
+
+// The next session of the chosen topic, else of the topic last read, else of the oldest topic.
+function nextFor(data: TodayData, topicId: number | null) {
+  const preferred = topicId ?? data.lastTopicId;
+  return data.nextSessions.find((t) => t.topicId === preferred) ?? data.nextSessions[0];
 }

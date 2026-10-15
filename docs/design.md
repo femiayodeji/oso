@@ -128,7 +128,8 @@ Keep each mascot at about 120–160px above one line of text and one button. New
 
 - **Primary:** the reading panda on a cream tile, `#F7F1E3`.
 - **Dark variant:** the same panda on a dark tile, `#132122`, used for iOS dark mode.
-- The plain "O" mark is **not** the app icon. It survives only as the Android themed (monochrome) icon and the notification small icon, which must be single-colour shapes.
+- The plain "O" mark is **not** the app icon. It survives only as the Android themed (monochrome) icon, which must be a single-colour shape.
+- The notification small icon is the brand panda head: white on transparent, with the ears and eye patches as faint (partial-alpha) shapes, because Android keeps only the alpha and tints it. Built by `scripts/build-icons.sh`.
 - Android uses an adaptive icon: panda foreground on a `#F7F1E3` background. Android has no dark adaptive icon.
 
 ## Asset files

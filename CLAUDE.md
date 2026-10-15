@@ -38,7 +38,7 @@ Personal-use mobile app for habitual learning: type anything you want to learn (
   - Streak is **computed from `daily_activity`**, never stored as a mutable counter. Optionally store `best_streak`.
   - Day boundary is the device's **local midnight**. Store dates as local `YYYY-MM-DD`.
   - Assumption to confirm: a missed grace day does not add to the streak count and does not break the chain. Keep this logic in one pure function, `computeStreak()`, so it is easy to change.
-- **Spaced recall (phase 2):** cards have a Leitner `box` and `due_date`. Recall and quiz cards come back for review. The Today feed appends due review cards from older units after the session's own cards; answering a quiz in review counts as remembered or not.
+- **Spaced recall (phase 2):** cards have a Leitner `box` and `due_date`. Recall and quiz cards come back for review. The Today feed appends the same topic's due review cards after the session's own cards (other topics' reviews stay behind the "Review due cards" button), and opens on the topic last read; answering a quiz in review counts as remembered or not.
 
 ## Data model (SQLite)
 
@@ -226,8 +226,8 @@ Define all colors once as tokens. Components never use raw hex values.
 
 - **Primary: the reading panda** (panda holding the green book) on a cream tile `#F7F1E3`. It is distinctive; the plain "O" was not.
 - **Dark variant:** the same panda on a dark tile `#132122`, used for iOS dark mode (`ios.icon.dark`).
-- **Do not use the "Minimal" icon** (white "O" on green) as the app icon. The "O" survives only as the Android themed (monochrome) icon and the notification small icon, which must be single-colour shapes.
-- Android: provide an adaptive icon (panda foreground plus `#F7F1E3` background; Android has no dark adaptive icon) and a **monochrome** notification small icon (white-on-transparent, simple shape). Notification small icons cannot be full color.
+- **Do not use the "Minimal" icon** (white "O" on green) as the app icon. The "O" survives only as the Android themed (monochrome) icon, which must be a single-colour shape.
+- Android: provide an adaptive icon (panda foreground plus `#F7F1E3` background; Android has no dark adaptive icon) and a **monochrome** notification small icon: the brand panda head (`pandaIcon`) with a solid face and faint ears and eye patches, built by `scripts/build-icons.sh`. The head, not the reading panda, because the book and arms blur away at 24 dp. Notification small icons cannot be full color: Android keeps only the alpha and tints it.
 - Rebuild with `scripts/build-icons.sh [master.png]` after changing the reading panda art.
 
 ### Mascot (panda)
@@ -262,7 +262,7 @@ Replace art by overwriting these files; names and sizes are what the code and `a
 | iOS dark icon | `assets/icon-dark.png` (`ios.icon.dark` in `app.json`) | 1024 px square | Reading panda on opaque `#132122`. Same script. |
 | Android adaptive foreground | `assets/android-icon-foreground.png` | 1024 px square | Transparent reading panda; keep the art inside the centre 66%. Background is the colour `#F7F1E3` in `app.json`. Same script. |
 | Android themed icon | `assets/android-icon-monochrome.png` | 1024 px square | White on transparent, same safe zone. |
-| Notification small icon | `assets/notification-icon.png` | 96 px square | White on transparent, simple shape. |
+| Notification small icon | `assets/notification-icon.png` | 96 px square | White panda head on transparent, black fur as partial alpha. Built from `pandaIcon@3x.png` by `scripts/build-icons.sh`. |
 | Splash | `assets/splash-icon.png` | 1024 px square (currently 400) | Transparent; shown 160 pt wide on `#F7F6F2` / `#121614`. |
 | Sounds | `assets/sounds/{tap,click,streak}.m4a` | short, quiet (about -30 dB mean) | AAC; `.webm` does not play on iOS. |
 

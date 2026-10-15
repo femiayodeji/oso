@@ -2,6 +2,7 @@ import { getStreak } from '../../db/activity';
 import { getTopic, listTopics } from '../../db/topics';
 import { listCardsForTopic, listDueReviewCards } from '../../db/cards';
 import { getUnitProgress } from '../../db/units';
+import { getLastTopicId } from '../../db/settings';
 import { getSession, listNextSessions, listSessions, type SessionWithTopic } from '../../db/sessions';
 import { todayLocal } from '../../lib/dates';
 import { hasApiKey } from '../../llm/apiKey';
@@ -25,6 +26,8 @@ export interface TodayData {
   preparing: { topic: Topic; done: number; total: number } | null;
   // Whether any recall card from a completed session is due today.
   hasDueReviews: boolean;
+  // The topic last read here; Today opens on it while it has a session left.
+  lastTopicId: number | null;
 }
 
 export interface Recap {
@@ -34,16 +37,17 @@ export interface Recap {
 }
 
 export async function loadToday(): Promise<TodayData> {
-  const [hasKey, topics, nextSessions, streak, due] = await Promise.all([
+  const [hasKey, topics, nextSessions, streak, due, lastTopicId] = await Promise.all([
     hasApiKey(),
     listTopics(),
     listNextSessions(),
     getStreak(),
     listDueReviewCards(todayLocal(), { limit: 1 }),
+    getLastTopicId(),
   ]);
   const pending = topics.find((b) => b.status === 'generating' || b.status === 'draft');
   const preparing = pending ? { topic: pending, ...(await getUnitProgress(pending.id)) } : null;
-  return { hasKey, topics, nextSessions, streak, preparing, hasDueReviews: due.length > 0 };
+  return { hasKey, topics, nextSessions, streak, preparing, hasDueReviews: due.length > 0, lastTopicId };
 }
 
 // A session opened from the topic screen. Completed or missing sessions are ignored.

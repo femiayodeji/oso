@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
-import { openSystemSettings, requestPermission, syncReminders, type ReminderPermission } from '../../notifications';
+import { openSystemSettings, requestPermission, sendTestReminder, syncReminders, type ReminderPermission } from '../../notifications';
 import { useSettings } from '../../settings/SettingsContext';
 import { useTheme } from '../../theme';
 import type { AppSettings } from '../../types';
@@ -18,6 +19,7 @@ interface Props {
 export function ReminderSection({ permission, onPermissionChanged }: Props) {
   const { colors, radius, spacing } = useTheme();
   const { settings, update } = useSettings();
+  const [testSent, setTestSent] = useState(false);
 
   const change = (patch: Partial<AppSettings>) => {
     void update(patch)
@@ -33,6 +35,13 @@ export function ReminderSection({ permission, onPermissionChanged }: Props) {
       void syncReminders();
     }
     onPermissionChanged();
+  };
+
+  // TEMPORARY: remove with sendTestReminder.
+  const sendTest = () => {
+    setTestSent(true);
+    sendTestReminder().catch(() => setTestSent(false));
+    setTimeout(() => setTestSent(false), 8000);
   };
 
   return (
@@ -57,6 +66,15 @@ export function ReminderSection({ permission, onPermissionChanged }: Props) {
       {permission === 'granted' ? <AppText variant="caption">Reminders are on.</AppText> : null}
       <TimeStepper label="Evening reminder" value={settings.reminderEvening} onChange={(reminderEvening) => change({ reminderEvening })} />
       <TimeStepper label="Running out reminder" value={settings.reminderLate} onChange={(reminderLate) => change({ reminderLate })} />
+      {permission === 'granted' ? (
+        <Button
+          label={testSent ? 'Arriving in a few seconds' : 'Send a test reminder'}
+          variant="quiet"
+          disabled={testSent}
+          onPress={sendTest}
+          style={styles.start}
+        />
+      ) : null}
     </Section>
   );
 }
@@ -64,4 +82,5 @@ export function ReminderSection({ permission, onPermissionChanged }: Props) {
 const styles = StyleSheet.create({
   banner: { flexDirection: 'row', alignItems: 'center' },
   fill: { flex: 1 },
+  start: { alignSelf: 'flex-start' },
 });

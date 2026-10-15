@@ -38,7 +38,7 @@ Personal-use mobile app for habitual learning: type anything you want to learn (
   - Streak is **computed from `daily_activity`**, never stored as a mutable counter. Optionally store `best_streak`.
   - Day boundary is the device's **local midnight**. Store dates as local `YYYY-MM-DD`.
   - Assumption to confirm: a missed grace day does not add to the streak count and does not break the chain. Keep this logic in one pure function, `computeStreak()`, so it is easy to change.
-- **Spaced recall (phase 2):** cards have a Leitner `box` and `due_date`. Recall and quiz cards come back for review. The Today feed appends due review cards from older units after the session's own cards; answering a quiz in review counts as remembered or not.
+- **Spaced recall (phase 2):** cards have a Leitner `box` and `due_date`. Recall and quiz cards come back for review. The Today feed appends the same topic's due review cards after the session's own cards (other topics' reviews stay behind the "Review due cards" button), and opens on the topic last read; answering a quiz in review counts as remembered or not.
 
 ## Data model (SQLite)
 

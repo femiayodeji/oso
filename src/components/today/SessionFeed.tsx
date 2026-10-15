@@ -43,9 +43,10 @@ interface Props {
   onCompleted: (topicFinished: boolean) => void;
 }
 
-// One card per page, the session's own cards first, then due review cards, then Finish.
+// One card per page, the session's own cards first, then the topic's due review cards, then Finish.
 export function SessionFeed({ session, onCompleted }: Props) {
   const sessionId = session?.id ?? null;
+  const topicId = session?.topicId;
   const listRef = useRef<FlatList<Item>>(null);
   const dragging = useRef(false);
   const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -67,7 +68,8 @@ export function SessionFeed({ session, onCompleted }: Props) {
     let alive = true;
     Promise.all([
       sessionId == null ? Promise.resolve<Card[]>([]) : listCardsForSession(sessionId),
-      listDueReviewCards(todayLocal(), { excludeSessionId: sessionId ?? undefined, limit: REVIEW_LIMIT }),
+      // A session only brings back its own topic's cards; the review-only feed takes every topic.
+      listDueReviewCards(todayLocal(), { excludeSessionId: sessionId ?? undefined, topicId, limit: REVIEW_LIMIT }),
     ])
       .then(([own, due]) => {
         if (!alive) return;
@@ -80,7 +82,7 @@ export function SessionFeed({ session, onCompleted }: Props) {
     return () => {
       alive = false;
     };
-  }, [sessionId]);
+  }, [sessionId, topicId]);
 
   const items = useMemo<Item[]>(
     () => [

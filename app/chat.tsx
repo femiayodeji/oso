@@ -102,16 +102,21 @@ export default function ChatScreen() {
         </>
       ) : null}
       {sendError ? (
-        <View style={[styles.row, { gap: spacing.sm }]}>
+        <PopIn kind="rise" style={[styles.row, { gap: spacing.sm }]}>
           <Mascot state="error" size={56} />
           <View style={styles.fill}>
             <ErrorText>{sendError}</ErrorText>
           </View>
-        </View>
+        </PopIn>
       ) : null}
       {planNote ? (
-        <View style={{ gap: spacing.sm }}>
-          <AppText variant="caption">{planNote}</AppText>
+        <PopIn kind="rise" style={{ gap: spacing.sm }}>
+          <View style={[styles.row, { gap: spacing.sm }]}>
+            <Mascot state="happy" size={56} />
+            <AppText variant="caption" style={styles.fill}>
+              {planNote}
+            </AppText>
+          </View>
           {betterDays !== null && !pending ? (
             <Chips
               label="Quick replies"
@@ -120,7 +125,7 @@ export default function ChatScreen() {
             />
           ) : null}
           <Button label="Go to Today" onPress={goToToday} />
-        </View>
+        </PopIn>
       ) : null}
       {!hasPlan && !preparing && !pending && !planNote ? (
         <Chips label="Quick replies" options={QUICK_REPLIES} onChange={(days) => void send(planQuickReply(days))} />

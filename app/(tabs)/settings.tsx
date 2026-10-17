@@ -82,7 +82,7 @@ export default function SettingsScreen() {
 
       <AppText variant="caption">{`Best streak: ${data.bestStreak}`}</AppText>
       <AppText variant="caption" center style={{ paddingTop: 24 }}>
-        Better topics. A calmer mind.
+        Better books. A calmer mind.
       </AppText>
     </Screen>
   );

@@ -78,12 +78,15 @@ export async function generateUnitContent(
   topic: Topic,
   unit: Unit,
   outline: Pick<Unit, 'idx' | 'title'>[],
+  cardCount: number | null,
 ): Promise<{ summary: string; cards: NewCard[] }> {
   let source = unit.sourceText;
   for (let attempt = 0; ; attempt++) {
     try {
+      // Units of a topic share the system prompt, so cache it: the next unit (and any JSON
+      // retry) reads it instead of paying for it again.
       const content = await completeJson(
-        unitPrompt({ topic, unit: { ...unit, sourceText: source }, outline }),
+        { ...unitPrompt({ topic, unit: { ...unit, sourceText: source }, outline, cardCount }), cache: 'system' },
         unitContentSchema,
       );
       return { summary: content.summary, cards: toNewCards(content.cards) };

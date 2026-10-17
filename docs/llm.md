@@ -40,6 +40,21 @@ testConnection(): Promise<void>
 | `adapters/openaiCompatible.ts` | `POST {baseUrl}/chat/completions`, `Authorization: Bearer <key>` | Uses JSON mode when the prompt mentions JSON; retries once without it if the model rejects `response_format` |
 | `adapters/anthropic.ts` | `POST {baseUrl}/messages`, headers `x-api-key` and `anthropic-version` | `max_tokens` is 16,000; a `refusal` stop reason becomes a readable error |
 
+### Prompt caching
+
+The user pays for their own tokens, so repeated prompt prefixes are cached where it pays off. Requests can set `cache: 'system' | 'conversation'` on `CompletionRequest`.
+
+| Call | Mode | Why |
+|---|---|---|
+| Unit generation | `'system'` | Every unit of a topic shares the system prompt (role, card rules, course line, full outline, JSON shape). The first unit writes it; later units and the JSON retry (which only appends messages) read it at about a tenth of the input price. |
+| Chat | `'conversation'` | Also caches the history up to the newest message, so the next turn reuses it. History is dropped in steps of 6 once it passes 12 messages (`historyWindow` in `src/llm/history.ts`), not one per turn, so the prefix stays stable. |
+| Outline, card rewrite, test connection | none | One-off calls never pay the 1.25x cache-write premium. |
+
+- **Anthropic, and Anthropic models through OpenRouter** (`anthropic/` model ids): explicit `cache_control: {type: 'ephemeral'}` markers, 5-minute lifetime, at most 2 of the allowed 4. Explicit rather than automatic, because automatic would mark the unit-specific user message.
+- **OpenAI, Gemini, Groq, DeepSeek and other OpenRouter models** cache a repeated prefix automatically, so their requests are unchanged and only need a stable prefix.
+- **Short prompts are not cached, and nothing reports it.** The minimum is 512 tokens on current Claude models (up to 4096 on older ones) and 1024 on OpenAI. Check `usage.cache_read_input_tokens` to confirm.
+- **Rules for prompts:** shared content first, changing content last; no timestamps or ids in a system prompt. In `unitPrompt` only the unit, its card count, the grounding line and the source text go in the user message. In `chatSystemPrompt` the plan state comes last.
+
 ### HTTP wrapper
 
 `src/llm/http.ts` is a thin `fetch` wrapper with `postJson` and `getJson`:
@@ -113,8 +128,9 @@ Every prompt is in `src/llm/prompts.ts`. None are written inline in components.
 
 - What the learner typed is wrapped in `<request>` tags in the outline prompt.
 - Uploaded text is wrapped in `<source_text>` tags and the prompt says it is material to study, not instructions.
-- Card counts come from `cardCountRange(sourceChars, depth)`: by depth when there is no source (4–6, 6–9 or 8–12), by length when there is (4–7, 6–10 or 8–14).
-- The outline prompt asks for the depth's unit range for open topics (4–6, 8–12 or 16–24) and tells the model to ignore it for books.
+- Counts come from the plan length (`src/plan/budget.ts`, reasoning in [learning-science.md](learning-science.md)): the outline asks for exactly `unitCountFor(days)` units for an open topic, and each unit call asks for its share of the budget from `cardsPerUnit` ("Write N cards (N-1 to N+1 is fine)").
+- Topics with no `plan_days` (created before plan length existed) fall back to their depth ranges in `src/topic/depth.ts`.
+- The chat prompt has a Pace section: about 10 cards a day, at most 12. Its plan state gives the cards left and the matching days, and tells the model to warn about a heavy plan but still emit `set_plan` when the learner clearly asked.
 
 ## Generation pipeline
 
@@ -124,8 +140,10 @@ Every prompt is in `src/llm/prompts.ts`. None are written inline in components.
 runGeneration(topicId)
   ├─ ensureOutline      build units if none exist; save title, author and icon
   ├─ generateUnits      one call per unit not yet 'done'
-  └─ finish             'ready' if all done, else 'failed'
+  └─ finish             'ready' if all done, else 'failed'; split cards into plan_days sessions
 ```
+
+- **Books are fitted after the outline.** `fitDays` stretches `plan_days` when a book (or uploaded material) has too many chapters for 12 cards a day.
 
 - **One call per unit** keeps context small and makes retries cheap.
 - **Saved after every unit.** A unit's cards and summary are written, and it is marked `done`, before the next starts.
@@ -165,7 +183,7 @@ PDF parsing runs on the JS thread and yields every few pages to keep the UI resp
 `src/llm/chat.ts` and `src/llm/chatReply.ts`.
 
 1. The system prompt carries the topic, the plan state and every unit's summary (trimmed to a shared budget of about 16,000 characters).
-2. The last 12 messages are sent, starting on a user turn.
+2. Recent history is sent, starting on a user turn: up to 12 messages, dropped in steps of 6 so the cached prefix stays stable.
 3. `parseChatReply` removes any JSON object with an `action` key from the visible text. Only an object that passes `chatActionSchema` is acted on.
 4. A valid `set_plan` is applied only when the topic's cards are ready. If they are not, the reply is replaced with a message saying so, because the model may claim otherwise.
 5. Both the user message and the final reply are stored in `chat_messages`.
@@ -186,12 +204,13 @@ The plan is never changed from free text.
 
 | File | Covers |
 |---|---|
-| `adapters.test.ts` | Request bodies, response parsing, model and base URL resolution |
+| `adapters.test.ts` | Request bodies (including cache markers), response parsing, model and base URL resolution |
+| `history.test.ts` | Chat history window |
 | `http.test.ts` | Retries, backoff, error mapping, key scrubbing |
 | `json.test.ts`, `jsonCompletion.test.ts` | Fence stripping, extraction, the one-retry rule |
 | `chatReply.test.ts` | Action extraction and validation |
 | `prompts.test.ts` | Chat prompt plan wording |
-| `quiz.test.ts` | Quiz validation, card mapping, outline fields, depth-based card counts |
+| `quiz.test.ts` | Quiz validation, card mapping, outline fields, legacy depth-based card counts |
 | `textSplit.test.ts`, `epub.test.ts`, `pdf.test.ts` | Chapter detection and file parsing |
 | `models.test.ts` | Model list parsing, sorting and filtering |
 | `live.test.ts` | Real provider calls; skipped unless `OSO_LIVE=1` |

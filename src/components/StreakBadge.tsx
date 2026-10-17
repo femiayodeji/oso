@@ -6,10 +6,10 @@ import { fonts, useTheme } from '../theme';
 import { AppText } from './AppText';
 import { useReduceMotion } from './motion/useReduceMotion';
 
-// Flame plus number only; the full panda is never shown for the streak.
+// Flame plus number on a small accent tile, as on the brand sheet; the full panda is never shown for the streak.
 // When the count goes up, the flame jumps and wiggles and the number pops.
 export function StreakBadge({ count }: { count: number }) {
-  const { colors, spacing } = useTheme();
+  const { colors, radius, spacing } = useTheme();
   const reduce = useReduceMotion();
   const previous = useRef(count);
   const jump = useRef(new Animated.Value(0)).current;
@@ -41,20 +41,28 @@ export function StreakBadge({ count }: { count: number }) {
     <View
       accessible
       accessibilityLabel={`Streak: ${count} ${count === 1 ? 'day' : 'days'}`}
-      style={[styles.badge, { gap: spacing.xs }]}
+      style={styles.hit}
     >
-      <Animated.View style={flame}>
-        <Ionicons name="flame" size={18} color={colors.accent} />
-      </Animated.View>
-      <Animated.View style={number}>
-        <AppText variant="body" color="accent" style={{ fontFamily: fonts.bold }}>
-          {count}
-        </AppText>
-      </Animated.View>
+      <View
+        style={[
+          styles.badge,
+          { gap: spacing.xs, backgroundColor: colors.accent, borderRadius: radius.sm, paddingHorizontal: spacing.sm },
+        ]}
+      >
+        <Animated.View style={flame}>
+          <Ionicons name="flame" size={18} color={colors.onAccent} />
+        </Animated.View>
+        <Animated.View style={number}>
+          <AppText variant="body" color="onAccent" style={{ fontFamily: fonts.bold }}>
+            {count}
+          </AppText>
+        </Animated.View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  badge: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
+  hit: { minHeight: 44, justifyContent: 'center' },
+  badge: { flexDirection: 'row', alignItems: 'center', minHeight: 32 },
 });

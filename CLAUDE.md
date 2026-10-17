@@ -28,11 +28,11 @@ Personal-use mobile app for habitual learning: type anything you want to learn (
 - **Topic**: anything the user wants to learn, typed as free text ("Stoicism", "How TCP works", "Atomic Habits"). The outline call decides whether it is a **book** the model knows (units are its real chapters) or an open **topic** (the model designs a syllabus). It also returns a clean title, a book's author, and an **icon** from a fixed list (`src/topic/icons.ts`). Source material is **optional**:
   - `model_knowledge`: no file; the LLM generates from what it knows. Show a small "generated from model knowledge" label.
   - `uploaded`: user supplies a file or pasted text; unit text is included as context in prompts. (No vector DB or embeddings. Send the relevant unit as context.)
-- **Depth**: `quick` / `solid` / `deep` (`src/topic/depth.ts`), chosen when adding. Sets the number of units for open topics, and cards per unit for books.
+- **Plan length**: 3 days / 1 week / 2 weeks / 1 month, chosen when adding and stored as `plan_days` **before generation**. It sizes the content (`src/plan/budget.ts`): budget = days × 10 cards, so a session is about **10 new cards (cap 12) plus at most 5 reviews**, about 5 minutes. Open topics get about one unit per 8 cards; each unit gets its share (3 to 12 cards). A book keeps its chapters; if they can't fit 12 cards a day the plan is stretched and the topic screen says so. Why: `docs/learning-science.md`. `depth` (`src/topic/depth.ts`) is legacy, only for topics without `plan_days`.
 - **Unit**: one section of a topic (a book chapter, or one step of a syllabus) with a summary.
 - **Card**: one idea, text only. Types: `summary` (the hook), `key_idea`, `recall` (question, tap to reveal answer), `quiz` (multiple choice, 2 to 5 options, instant right/wrong feedback, `back` explains why).
 - **Session**: a day's learning made of ordered cards. Sessions form an **ordered pool per topic**. They are **not tied to calendar dates**. Any session can be done at any time. Missing a day creates no "overdue" state.
-- **Plan**: set through the **LLM chat** (for example "finish this in 5 days"). The model returns a structured action and the app splits content into sessions. All content is **generated and saved locally before the streak starts**. Editing the plan only regenerates or reshuffles sessions that are **not yet completed**; completed sessions are immutable.
+- **Plan**: first set by the plan length when adding; sessions are split as soon as generation finishes. Changed later through the **LLM chat** (for example "finish this in 5 days"): the model returns a structured action and the app re-splits. A plan heavier than 12 cards a day is warned about (with a better-days chip), never blocked. All content is **generated and saved locally before the streak starts**. Editing the plan only regenerates or reshuffles sessions that are **not yet completed**; completed sessions are immutable.
 - **Streak**: global across all topics. Completing **at least one session from any topic** on a day counts as activity.
   - **Grace rule:** one missed day is allowed. Two full days with no activity resets the streak.
   - Streak is **computed from `daily_activity`**, never stored as a mutable counter. Optionally store `best_streak`.
@@ -54,7 +54,7 @@ CREATE TABLE topics (
   plan_days INTEGER,
   created_at TEXT NOT NULL,
   icon TEXT,                      -- a name from src/topic/icons.ts
-  depth TEXT CHECK (depth IN ('quick','solid','deep'))
+  depth TEXT CHECK (depth IN ('quick','solid','deep'))  -- legacy; null when plan_days set at creation
 );
 
 CREATE TABLE units (
@@ -123,14 +123,15 @@ Use a simple versioned migration runner (`PRAGMA user_version`). Migrations are 
 - Thin `fetch` wrapper only. Add timeout, retry with backoff on 429/5xx, and clear error mapping (invalid key, rate limit, network).
 - **Structured output:** instruct the model to return JSON only, strip code fences, parse, validate with `zod`. On failure, retry once with the validation error appended, then mark the item `failed`.
 - If no API key is set, any LLM action **redirects to Settings** instead of throwing.
+- **Prompt caching** (the user pays for tokens): unit generation sets `cache: 'system'`, chat `cache: 'conversation'`; one-off calls set nothing. Anthropic (and `anthropic/` models on OpenRouter) get explicit `cache_control` markers; other providers cache prefixes automatically. Keep shared prompt content first and changing content last (unit specifics in the user message, chat plan state at the end), never timestamps in a system prompt. Chat history drops in steps, not one message per turn.
 - The API key is read from SecureStore at call time. **Never** log it, store it in SQLite, or include it in prompts or error reports.
 
 ### Generation pipeline
 
-1. **Add topic**: one free-text field ("What do you want to learn?"), depth, optional own material.
+1. **Add topic**: one free-text field ("What do you want to learn?"), "How long?" chips, optional own material.
 2. Generate the outline (from the file if uploaded, else from model knowledge, which also returns title, author and icon).
-3. For each unit, generate the summary and cards. One call per unit keeps context small and makes retries cheap.
-4. Chat sets the plan; the app splits cards into sessions across the chosen number of days.
+3. For each unit, generate the summary and its budgeted number of cards. One call per unit keeps context small and makes retries cheap.
+4. When all units are done the app splits cards into `plan_days` sessions. Chat only changes the plan later.
 5. Persist after **every** unit. The pipeline must be **resumable**: on app open, continue units with `gen_status != 'done'`. Show progress ("Preparing units, 4 of 12") and a Retry button on failure.
 6. Long uploaded material: chunk by detected chapter, and by size if a chapter exceeds the model's context.
 
@@ -180,7 +181,7 @@ Local scheduled notifications only. No push server.
 | Settings, no API key | Add an API key to start. | (highlight the field) |
 | Notifications denied | Reminders are off. | Enable reminders |
 
-First-run flow: Settings (API key) → Add topic → Chat to set plan → Today. Each empty state routes to the next step; no tutorial.
+First-run flow: Settings (API key) → Add topic (with plan length) → Today. Each empty state routes to the next step; no tutorial.
 
 ## Design
 
@@ -237,15 +238,15 @@ Static illustrations (motion comes only from the shared `Float`/`PopIn` wrappers
 | State | Used in |
 |---|---|
 | Reading | Splash screen, first-run |
-| No Topics | Today (no topics), Topics (empty) |
-| Generating | Topic generation progress |
+| No Topics (brand sheet: "No Books") | Today (no topics), Topics (empty) |
+| Generating | Topic generation progress, topic not prepared yet |
 | Chat | Chat screen, new topic with no plan |
 | Thinking | Chat while waiting for an LLM reply |
-| Happy / Progress | All topics finished, topic completion recap |
+| Happy / Progress | All topics finished, topic completion recap, plan set in chat |
 | Completed | Today (done for the day) |
 | Reminder | Notifications-denied banner, Settings reminder section |
-| Error / Retry | Failed generation, invalid API key, network error |
-| Streak | **Badge only**: flame plus number in a screen corner. Do not show the full panda for the streak. |
+| Error / Retry | Failed generation, invalid API key or failed connection test, chat send error |
+| Streak | **Badge only**: an `accent` tile with the flame and number in `onAccent`, in a screen corner. Do not show the full panda for the streak. |
 
 - Keep each mascot at a modest size (about 120-160px) above a single line of text and one button.
 - If new states are needed, generate them in the same style and add them to this table.
@@ -282,7 +283,8 @@ src/
   db/                 # schema, migrations, repositories (one file per table)
   llm/                # adapters, client, prompts, zod schemas, pipeline
   streak/             # computeStreak() and date helpers (pure)
-  topic/              # icons, depth presets, suggestions (pure)
+  plan/               # session splitter, plan length budget (pure)
+  topic/              # icons, legacy depth presets, suggestions (pure)
   notifications/      # syncReminders(), copy
   components/
     motion/           # shared animation primitives

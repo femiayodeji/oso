@@ -4,12 +4,14 @@ import {
   getUnit,
   insertUnits,
   listUnitHeads,
+  listUnitSourceChars,
   replaceUnitsForTopic,
   updateUnit,
   type UnitHead,
 } from '../db/units';
 import { clearChat } from '../db/chat';
 import { reapplyPlan } from '../plan/applyPlan';
+import { cardsPerUnit, fitDays } from '../plan/budget';
 import type { Topic, TopicSource } from '../types';
 import { hasApiKey } from './apiKey';
 import { deleteSourceFile, importSourceFile } from './sourceText';
@@ -85,16 +87,32 @@ async function ensureOutline(topic: Topic): Promise<UnitHead[]> {
   return listUnitHeads(topic.id);
 }
 
+// A book's chapters (or an upload's parts) are fixed, so a plan too short for them is
+// stretched to the fewest days that keep each session at or under the daily maximum.
+async function fitPlan(topic: Topic, unitCount: number): Promise<Topic> {
+  if (topic.planDays === null) return topic;
+  const planDays = fitDays(topic.planDays, unitCount);
+  if (planDays !== topic.planDays) await updateTopic(topic.id, { planDays });
+  return { ...topic, planDays };
+}
+
+// Each unit's share of the plan's card budget; null for topics without a plan (legacy).
+async function unitCardCounts(topic: Topic): Promise<number[] | null> {
+  if (topic.planDays === null) return null;
+  return cardsPerUnit(topic.planDays, await listUnitSourceChars(topic.id));
+}
+
 // Source text is loaded one unit at a time, never the whole topic at once.
 async function generateUnits(topic: Topic, heads: UnitHead[]): Promise<void> {
-  for (const head of heads) {
+  const counts = await unitCardCounts(topic);
+  for (const [i, head] of heads.entries()) {
     if (head.genStatus === 'done') continue;
     // The topic may have been deleted while the previous unit was generating.
     if (!(await getTopic(topic.id))) return;
     try {
       const unit = await getUnit(head.id);
       if (!unit) continue;
-      const content = await generateUnitContent(topic, unit, heads);
+      const content = await generateUnitContent(topic, unit, heads, counts?.[i] ?? null);
       await replaceCardsForUnit(topic.id, unit.id, content.cards);
       await updateUnit(unit.id, { summary: content.summary, genStatus: 'done' });
     } catch (e) {
@@ -119,9 +137,12 @@ async function generate(topicId: number): Promise<void> {
   notify(topicId);
 
   const units = await ensureOutline(topic);
-  await generateUnits(topic, units);
+  // Re-read: the outline may have tidied the title.
+  const outlined = await fitPlan((await getTopic(topicId)) ?? topic, units.length);
+  await generateUnits(outlined, units);
 
-  if (!(await getTopic(topicId))) {
+  const current = await getTopic(topicId);
+  if (!current) {
     lastErrors.delete(topicId);
     return;
   }
@@ -131,9 +152,10 @@ async function generate(topicId: number): Promise<void> {
     return;
   }
   lastErrors.delete(topicId);
-  // A topic that already has a plan gets its new cards placed into sessions, keeping the
-  // plan's total length. Without a plan the cards stay unassigned until the chat sets one.
-  if (topic.planDays !== null) await reapplyPlan(topicId, topic.planDays);
+  // A topic with a plan (every new topic: its length is picked when adding it, then fitted
+  // to the outline) gets its cards placed into sessions, keeping the plan's total length.
+  // Legacy topics without a plan keep their cards unassigned until the chat sets one.
+  if (current.planDays !== null) await reapplyPlan(topicId, current.planDays);
   await updateTopic(topicId, { status: 'ready' });
 }
 

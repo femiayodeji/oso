@@ -1,11 +1,13 @@
-// How deep a topic goes. Topics get a syllabus of `units`; books keep their real chapters,
-// so depth only changes how many cards each unit gets.
+// Legacy: how deep a topic goes, for topics made before the plan length was chosen up front
+// (those have plan_days null). New topics are sized by src/plan/budget.ts instead.
+// Topics got a syllabus of `units`; books kept their real chapters, so depth only changed
+// how many cards each unit got.
 export type Depth = 'quick' | 'solid' | 'deep';
 
-export const DEPTHS: Record<Depth, { label: string; note: string; units: [number, number]; cards: [number, number] }> = {
-  quick: { label: 'Quick taste', note: 'About 5 short units', units: [4, 6], cards: [4, 6] },
-  solid: { label: 'Solid', note: 'About 10 units', units: [8, 12], cards: [6, 9] },
-  deep: { label: 'Deep dive', note: 'About 20 units', units: [16, 24], cards: [8, 12] },
+export const DEPTHS: Record<Depth, { units: [number, number]; cards: [number, number] }> = {
+  quick: { units: [4, 6], cards: [4, 6] },
+  solid: { units: [8, 12], cards: [6, 9] },
+  deep: { units: [16, 24], cards: [8, 12] },
 };
 
 export const DEFAULT_DEPTH: Depth = 'solid';

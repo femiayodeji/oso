@@ -95,9 +95,9 @@ const topic: Topic = {
   source: 'model_knowledge',
   fileUri: null,
   status: 'generating',
-  planDays: null,
+  planDays: 3,
   icon: null,
-  depth: 'quick',
+  depth: null,
   createdAt: '2026-01-01T00:00:00',
 };
 
@@ -133,7 +133,7 @@ live.each(targets)('live: $name', (target) => {
 
   run('unit summary and cards validate', async () => {
     expect(units.length).toBeGreaterThan(0);
-    const { summary, cards } = await generateUnitContent(topic, units[0], units);
+    const { summary, cards } = await generateUnitContent(topic, units[0], units, 8);
     expect(summary.length).toBeGreaterThan(40);
     expect(cards.length).toBeGreaterThan(2);
     for (const card of cards.filter((c) => c.type === 'recall')) expect(card.back).toBeTruthy();
@@ -142,10 +142,11 @@ live.each(targets)('live: $name', (target) => {
 
   run('chat emits a set_plan action when asked', async () => {
     const system = chatSystemPrompt({
-      topic,
+      topic: { ...topic, planDays: null },
       units: units.slice(0, 3),
       cardsReady: true,
       cardCount: 80,
+      cardsLeft: 80,
       sessionsTotal: 0,
       sessionsCompleted: 0,
     });

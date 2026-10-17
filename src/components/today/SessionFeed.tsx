@@ -25,7 +25,7 @@ import { errorMessage } from '../useFocusLoad';
 import { CardPage } from './CardPage';
 import type { ActiveSession } from './todayData';
 
-const REVIEW_LIMIT = 10;
+const REVIEW_LIMIT = 5;
 const SETTLE_MS = 150;
 // Fraction of a page the list may sit off a page boundary before it is moved back.
 const SETTLE_SLACK = 0.05;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
+import { cardsPerUnit, fitDays, MAX_CARDS_PER_SESSION, unitCountFor } from '../budget';
 import { planRemaining, planWithinTotal, splitIntoSessions, type PlanCard } from '../splitPlan';
 
 // `perUnit[i]` cards in unit i, ids counting up from 1 in reading order.
@@ -145,5 +146,22 @@ describe('planWithinTotal', () => {
     const plan = planWithinTotal(makeCards([4]), 5, 5);
     expect(sizes(plan.sessions)).toEqual([4]);
     expect(plan.planDays).toBe(6);
+  });
+});
+
+describe('splitIntoSessions with the card budget', () => {
+  it('keeps every session of a new plan at or under the daily maximum', () => {
+    for (const days of [3, 7, 14, 30]) {
+      const perUnit = cardsPerUnit(days, Array(unitCountFor(days)).fill(null));
+      const sessions = splitIntoSessions(makeCards(perUnit), days);
+      expect(sessions).toHaveLength(days);
+      expect(Math.max(...sizes(sessions))).toBeLessThanOrEqual(MAX_CARDS_PER_SESSION);
+    }
+  });
+
+  it('keeps a stretched book plan at or under the daily maximum', () => {
+    const days = fitDays(3, 30);
+    const sessions = splitIntoSessions(makeCards(cardsPerUnit(days, Array(30).fill(null))), days);
+    expect(Math.max(...sizes(sessions))).toBeLessThanOrEqual(MAX_CARDS_PER_SESSION);
   });
 });

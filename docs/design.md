@@ -112,15 +112,15 @@ The panda illustrations themselves are static images. They move only through the
 |---|---|
 | `reading` | Splash, first run, Today with no API key |
 | `noTopics` | Today with no topics, Topics when empty |
-| `generating` | Topic generation progress |
-| `chat` | Chat with no plan |
+| `generating` | Topic generation progress, a topic not prepared yet |
+| `chat` | Chat with no plan, Today with a topic that has no plan (older topics) |
 | `thinking` | Chat while waiting for a reply |
-| `happy` | All topics finished, topic completion recap |
+| `happy` | All topics finished, topic completion recap, plan set in chat |
 | `completed` | Today when done for the day |
 | `reminder` | Notifications-denied banner, Settings reminder section |
-| `error` | Failed generation, invalid key, network error |
+| `error` | Failed generation, invalid key or failed connection test, chat send error |
 
-The streak uses a **badge only** (flame plus number). The full panda is never shown for the streak.
+The streak uses a **badge only**: an `accent` tile (`radius.sm`, no lip) with the flame and number in `onAccent`, as on the brand sheet. The full panda is never shown for the streak. The `noTopics` art is the brand sheet's "No Books" panda.
 
 Keep each mascot at about 120–160px above one line of text and one button. New states should match the existing style and be added to the table above.
 

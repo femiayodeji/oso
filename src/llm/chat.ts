@@ -12,7 +12,14 @@ import { CHAT_FALLBACKS, chatSystemPrompt } from './prompts';
 
 // `days` is the number of days remaining that the reader asked for. `sessionCount` is the
 // topic's total number of sessions afterwards, `completedCount` of which were already done.
-export type ChatAction = { type: 'set_plan'; days: number; sessionCount: number; completedCount: number };
+// `cardsLeft` is how many cards those remaining days hold.
+export type ChatAction = {
+  type: 'set_plan';
+  days: number;
+  sessionCount: number;
+  completedCount: number;
+  cardsLeft: number;
+};
 
 const HISTORY_LIMIT = 12;
 
@@ -38,6 +45,8 @@ export async function sendChatMessage(
   ]);
   // A failed or half-prepared topic has cards too, but its content is incomplete.
   const cardsReady = cards.length > 0 && (topic.status === 'ready' || topic.status === 'finished');
+  const completed = new Set(sessions.filter((t) => t.completedAt !== null).map((t) => t.id));
+  const cardsLeft = cards.filter((c) => c.sessionId === null || !completed.has(c.sessionId)).length;
   await addChatMessage(topicId, 'user', text);
 
   const raw = await complete({
@@ -46,8 +55,9 @@ export async function sendChatMessage(
       units,
       cardsReady,
       cardCount: cards.length,
+      cardsLeft,
       sessionsTotal: sessions.length,
-      sessionsCompleted: sessions.filter((t) => t.completedAt !== null).length,
+      sessionsCompleted: completed.size,
     }),
     messages: [...toHistory(previous), { role: 'user', content: text }],
   });
@@ -58,7 +68,7 @@ export async function sendChatMessage(
 
   if (parsed.action && cardsReady) {
     const { sessionCount, completedCount } = await applyPlan(topicId, parsed.action.days);
-    action = { type: 'set_plan', days: parsed.action.days, sessionCount, completedCount };
+    action = { type: 'set_plan', days: parsed.action.days, sessionCount, completedCount, cardsLeft };
     reply = reply || CHAT_FALLBACKS.planSet(parsed.action.days);
   } else if (parsed.action) {
     // The model's text may claim the plan was set; it was not, so say what is true.

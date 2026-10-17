@@ -53,12 +53,21 @@ export async function createTopic(input: {
   author?: string | null;
   source: TopicSource;
   fileUri?: string | null;
+  planDays?: number | null;
   depth?: Depth | null;
 }): Promise<Topic> {
   const createdAt = nowIso();
   const result = await write(
-    'INSERT INTO topics (title, author, source, file_uri, depth, created_at) VALUES (?, ?, ?, ?, ?, ?)',
-    [input.title, input.author ?? null, input.source, input.fileUri ?? null, input.depth ?? null, createdAt],
+    'INSERT INTO topics (title, author, source, file_uri, plan_days, depth, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [
+      input.title,
+      input.author ?? null,
+      input.source,
+      input.fileUri ?? null,
+      input.planDays ?? null,
+      input.depth ?? null,
+      createdAt,
+    ],
   );
   return {
     id: result.lastInsertRowId,
@@ -67,7 +76,7 @@ export async function createTopic(input: {
     source: input.source,
     fileUri: input.fileUri ?? null,
     status: 'draft',
-    planDays: null,
+    planDays: input.planDays ?? null,
     icon: null,
     depth: input.depth ?? null,
     createdAt,

@@ -78,12 +78,13 @@ export async function generateUnitContent(
   topic: Topic,
   unit: Unit,
   outline: Pick<Unit, 'idx' | 'title'>[],
+  cardCount: number | null,
 ): Promise<{ summary: string; cards: NewCard[] }> {
   let source = unit.sourceText;
   for (let attempt = 0; ; attempt++) {
     try {
       const content = await completeJson(
-        unitPrompt({ topic, unit: { ...unit, sourceText: source }, outline }),
+        unitPrompt({ topic, unit: { ...unit, sourceText: source }, outline, cardCount }),
         unitContentSchema,
       );
       return { summary: content.summary, cards: toNewCards(content.cards) };

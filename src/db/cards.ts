@@ -98,6 +98,17 @@ export async function getCard(id: number): Promise<Card | null> {
   return row ? toCard(row) : null;
 }
 
+// Cards not in a completed session: what is left to read in the topic's plan.
+export async function countCardsLeft(topicId: number): Promise<number> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ n: number }>(
+    `SELECT COUNT(*) AS n FROM cards c LEFT JOIN sessions s ON s.id = c.session_id
+     WHERE c.topic_id = ? AND s.completed_at IS NULL`,
+    [topicId],
+  );
+  return row?.n ?? 0;
+}
+
 export async function listCardsForSession(sessionId: number): Promise<Card[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<CardRow>(

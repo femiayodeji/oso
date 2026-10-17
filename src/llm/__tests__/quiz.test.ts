@@ -42,10 +42,15 @@ describe('outline', () => {
     expect(outlineSchema.safeParse({ units: [{ title: 'U' }] }).success).toBe(true);
   });
 
-  it('asks for the depth unit range and lists the icons', () => {
-    const content = outlinePrompt({ title: 'Stoicism', author: null, depth: 'quick' }).messages[0].content;
-    expect(content).toContain('Design 4 to 6 units');
+  it('asks for the unit count the plan length calls for, and lists the icons', () => {
+    const content = outlinePrompt({ title: 'Stoicism', author: null, depth: null, planDays: 7 }).messages[0].content;
+    expect(content).toContain('Design exactly 9 units');
     expect(content).toContain('flask');
+  });
+
+  it('falls back to the depth unit range for topics without a plan', () => {
+    const content = outlinePrompt({ title: 'Stoicism', author: null, depth: 'quick', planDays: null }).messages[0].content;
+    expect(content).toContain('Design 4 to 6 units');
   });
 
   it('sizes cards by depth without a source and by length with one', () => {

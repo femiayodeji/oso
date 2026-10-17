@@ -70,6 +70,17 @@ export async function listUnitHeads(topicId: number): Promise<UnitHead[]> {
   return rows.map(toHead);
 }
 
+// Source text length per unit (null without source text), in the same order as
+// listUnitHeads, without loading the text itself.
+export async function listUnitSourceChars(topicId: number): Promise<(number | null)[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<{ chars: number | null }>(
+    'SELECT length(source_text) AS chars FROM units WHERE topic_id = ? ORDER BY idx, id',
+    [topicId],
+  );
+  return rows.map((r) => r.chars);
+}
+
 export async function getUnit(id: number): Promise<Unit | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<UnitRow>('SELECT * FROM units WHERE id = ?', [id]);

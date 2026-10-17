@@ -7,6 +7,8 @@ import type { AppSettings } from '../../types';
 import { AppText } from '../AppText';
 import { Button } from '../Button';
 import { Mascot } from '../Mascot';
+import { Float } from '../motion/Float';
+import { PopIn } from '../motion/PopIn';
 import { Section } from './Section';
 import { TimeStepper } from './TimeStepper';
 
@@ -39,7 +41,11 @@ export function ReminderSection({ permission, onPermissionChanged }: Props) {
     <Section title="Reminders">
       {permission && permission !== 'granted' ? (
         <View style={[styles.banner, { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.lg, gap: spacing.md }]}>
-          <Mascot state="reminder" size={72} />
+          <PopIn>
+            <Float>
+              <Mascot state="reminder" size={72} />
+            </Float>
+          </PopIn>
           <View style={[styles.fill, { gap: spacing.sm }]}>
             {permission === 'denied' ? (
               <AppText variant="bodyStrong">Reminders are off.</AppText>

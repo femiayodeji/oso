@@ -9,6 +9,7 @@ import { useTheme } from '../../theme';
 import { AppText, ErrorText } from '../AppText';
 import { Button } from '../Button';
 import { Mascot } from '../Mascot';
+import { PopIn } from '../motion/PopIn';
 import { TextField } from '../TextField';
 import { ModelPicker } from './ModelPicker';
 import { Section } from './Section';
@@ -69,7 +70,9 @@ export function ModelSection({ hasKey }: { hasKey: boolean }) {
       {test.kind === 'ok' ? <AppText variant="caption">Connected.</AppText> : null}
       {test.kind === 'failed' ? (
         <View style={[styles.row, { gap: spacing.md }]}>
-          <Mascot state="error" size={72} />
+          <PopIn>
+            <Mascot state="error" size={72} />
+          </PopIn>
           <View style={styles.fill}>
             <ErrorText>{test.message}</ErrorText>
           </View>

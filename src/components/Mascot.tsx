@@ -24,15 +24,15 @@ const SOURCES: Record<MascotState, ImageSourcePropType> = {
 };
 
 const LABELS: Record<MascotState, string> = {
-  reading: 'Panda reading a topic',
-  noTopics: 'Panda looking at a small stack of topics',
-  generating: 'Panda dozing at a laptop',
+  reading: 'Panda reading a book',
+  noTopics: 'Panda next to a small stack of books',
+  generating: 'Panda dozing at a laptop while it works',
   chat: 'Panda chatting on a phone',
   thinking: 'Panda thinking',
-  happy: 'Happy panda with a topic',
-  completed: 'Content panda holding a finished topic',
-  reminder: 'Panda next to a bell',
-  error: 'Sad panda',
+  happy: 'Happy panda reading a book',
+  completed: 'Content panda holding a finished book',
+  reminder: 'Panda next to a ringing bell',
+  error: 'Sad panda with a retry sign',
 };
 
 export const pandaIcon: ImageSourcePropType = require('../../assets/mascot/pandaIcon.png');

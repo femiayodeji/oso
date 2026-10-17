@@ -16,12 +16,25 @@ import { ErrorLine, LoadingLine, Screen } from '../../src/components/Screen';
 import { useFocusLoad } from '../../src/components/useFocusLoad';
 import { describeLlmError, isNoKeyError } from '../../src/llm/errors';
 import { getGenerationError, isGenerating, runGeneration, subscribeGeneration } from '../../src/llm/pipeline';
+import { cardsPerDay, minDaysFor } from '../../src/plan/budget';
 import { useTheme } from '../../src/theme';
+
+// The pace of what is left, and why the plan is longer than picked when a book's chapters
+// (or an upload's parts) need more days than that. Derived, not stored.
+function planNotes({ topic, units, sessionsDone, sessionsTotal, cardsLeft }: TopicDetail) {
+  const daysLeft = sessionsTotal - sessionsDone;
+  const pace = daysLeft > 0 && cardsLeft > 0 ? `About ${cardsPerDay(cardsLeft, daysLeft)} cards a day` : null;
+  const fixedUnits = topic.author !== null || topic.source === 'uploaded';
+  const stretched = fixedUnits && units.total > 0 && topic.planDays === minDaysFor(units.total);
+  const what = topic.source === 'uploaded' ? `Your material has ${units.total} parts` : `This book has ${units.total} chapters`;
+  return { pace, stretch: stretched ? `${what}, so the plan is at least ${topic.planDays} days.` : null };
+}
 
 function PlanSection({ detail }: { detail: TopicDetail }) {
   const { spacing } = useTheme();
   const { topic, sessions, sessionsDone, sessionsTotal } = detail;
   const open = () => goToChat(topic.id);
+  const { pace, stretch } = planNotes(detail);
   return (
     <View style={{ gap: spacing.sm }}>
       <AppText variant="heading" accessibilityRole="header">
@@ -37,8 +50,9 @@ function PlanSection({ detail }: { detail: TopicDetail }) {
       ) : (
         <>
           <AppText variant="body" color="textMuted">
-            {`${topic.planDays ?? sessionsTotal} days, ${sessionsDone} done`}
+            {`${topic.planDays ?? sessionsTotal} days, ${sessionsDone} done${pace ? ` · ${pace}` : ''}`}
           </AppText>
+          {stretch ? <AppText variant="caption">{stretch}</AppText> : null}
           <ProgressBar value={sessionsDone / sessionsTotal} />
           <SessionPool sessions={sessions} onOpen={(session) => readSessionInToday(session.id)} />
           <Button label="Change plan" variant="secondary" onPress={open} />

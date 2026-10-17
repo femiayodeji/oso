@@ -1,5 +1,6 @@
 import * as DocumentPicker from 'expo-document-picker';
 
+import { countCardsLeft } from '../../db/cards';
 import { getTopic, listTopics } from '../../db/topics';
 import { getUnitProgress, listUnitHeads, type UnitHead } from '../../db/units';
 import { listSessions } from '../../db/sessions';
@@ -15,6 +16,7 @@ export interface TopicSummary {
 export interface TopicDetail extends TopicSummary {
   unitList: UnitHead[];
   sessions: Session[];
+  cardsLeft: number;
 }
 
 async function summarize(topic: Topic): Promise<TopicSummary & { sessions: Session[] }> {
@@ -36,8 +38,8 @@ export async function loadTopics(): Promise<TopicSummary[]> {
 export async function loadTopicDetail(id: number): Promise<TopicDetail | null> {
   const topic = await getTopic(id);
   if (!topic) return null;
-  const [summary, unitList] = await Promise.all([summarize(topic), listUnitHeads(id)]);
-  return { ...summary, unitList };
+  const [summary, unitList, cardsLeft] = await Promise.all([summarize(topic), listUnitHeads(id), countCardsLeft(id)]);
+  return { ...summary, unitList, cardsLeft };
 }
 
 export function statusLine({ topic, sessionsDone, sessionsTotal, units }: TopicSummary): string {

@@ -18,18 +18,18 @@ import { hasApiKey } from '../src/llm/apiKey';
 import { isNoKeyError } from '../src/llm/errors';
 import { runGeneration } from '../src/llm/pipeline';
 import { importSourceFile, savePastedText } from '../src/llm/sourceText';
-import { DEFAULT_DEPTH, DEPTHS, type Depth } from '../src/topic/depth';
+import { CARDS_PER_SESSION, DEFAULT_PLAN_DAYS, PLAN_LENGTHS } from '../src/plan/budget';
 import { pickSuggestions } from '../src/topic/suggestions';
 import { useTheme } from '../src/theme';
 
-const DEPTH_OPTIONS = (Object.keys(DEPTHS) as Depth[]).map((value) => ({ value, label: DEPTHS[value].label }));
+const LENGTH_OPTIONS = PLAN_LENGTHS.map(({ days, label }) => ({ value: days, label }));
 
 export default function AddTopicScreen() {
   const { spacing } = useTheme();
   const headerHeight = useHeaderHeight();
   const params = useLocalSearchParams<{ q?: string }>();
   const [title, setTitle] = useState(params.q ?? '');
-  const [depth, setDepth] = useState<Depth>(DEFAULT_DEPTH);
+  const [planDays, setPlanDays] = useState(DEFAULT_PLAN_DAYS);
   const [ownMaterial, setOwnMaterial] = useState(false);
   const [file, setFile] = useState<PickedFile | null>(null);
   const [pasted, setPasted] = useState('');
@@ -66,7 +66,7 @@ export default function AddTopicScreen() {
         title: cleanTitle,
         source: fileUri ? 'uploaded' : 'model_knowledge',
         fileUri,
-        depth,
+        planDays,
       });
       runGeneration(topic.id).catch((e: unknown) => {
         if (isNoKeyError(e)) goToSettings();
@@ -101,13 +101,11 @@ export default function AddTopicScreen() {
         <Chips label="Suggestions" options={suggestions.map((s) => ({ value: s, label: s }))} value={title} onChange={setTitle} />
       </PopIn>
 
-      {file ? null : (
-        <PopIn kind="rise" delay={200} style={{ gap: spacing.sm, paddingTop: spacing.sm }}>
-          <AppText variant="bodyStrong">How deep?</AppText>
-          <Chips label="Depth" options={DEPTH_OPTIONS} value={depth} onChange={setDepth} />
-          <AppText variant="caption">{DEPTHS[depth].note}. A book keeps its own chapters.</AppText>
-        </PopIn>
-      )}
+      <PopIn kind="rise" delay={200} style={{ gap: spacing.sm, paddingTop: spacing.sm }}>
+        <AppText variant="bodyStrong">How long?</AppText>
+        <Chips label="Plan length" options={LENGTH_OPTIONS} value={planDays} onChange={setPlanDays} />
+        <AppText variant="caption">{`About ${CARDS_PER_SESSION} cards a day, 5 minutes.`}</AppText>
+      </PopIn>
 
       <View style={{ gap: spacing.sm, paddingTop: spacing.sm }}>
         {ownMaterial ? (

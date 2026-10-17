@@ -20,7 +20,8 @@ import { listChatMessages } from '../src/db/chat';
 import { listSessions } from '../src/db/sessions';
 import { sendChatMessage } from '../src/llm/chat';
 import { describeLlmError, isNoKeyError } from '../src/llm/errors';
-import { planQuickReply } from '../src/llm/prompts';
+import { heavyPlanNote, planQuickReply } from '../src/llm/prompts';
+import { cardsPerDay, isOverloaded, suggestedDays } from '../src/plan/budget';
 import { useTheme } from '../src/theme';
 
 const HISTORY = 50;
@@ -43,6 +44,8 @@ export default function ChatScreen() {
   const [pending, setPending] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [planNote, setPlanNote] = useState<string | null>(null);
+  // A lighter plan to offer as a chip when the one just set packs too many cards a day.
+  const [betterDays, setBetterDays] = useState<number | null>(null);
   const inputRef = useRef<TextInput>(null);
   const listRef = useRef<FlatList>(null);
 
@@ -53,15 +56,19 @@ export default function ChatScreen() {
     setPending(clean);
     setSendError(null);
     setPlanNote(null);
+    setBetterDays(null);
     try {
       const result = await sendChatMessage(topicId, clean);
       if (result.action?.type === 'set_plan') {
-        const { days, sessionCount, completedCount } = result.action;
+        const { days, sessionCount, completedCount, cardsLeft } = result.action;
         const left = sessionCount - completedCount;
         const more = completedCount > 0 ? ' more' : '';
+        const heavy = isOverloaded(cardsLeft, days);
+        const load = heavy ? ` ${heavyPlanNote(cardsPerDay(cardsLeft, days), suggestedDays(cardsLeft))}` : '';
         setPlanNote(
-          `Plan set: ${days}${more} ${days === 1 ? 'day' : 'days'}, ${left} ${left === 1 ? 'session' : 'sessions'} to go.`,
+          `Plan set: ${days}${more} ${days === 1 ? 'day' : 'days'}, ${left} ${left === 1 ? 'session' : 'sessions'} to go.${load}`,
         );
+        if (heavy) setBetterDays(suggestedDays(cardsLeft));
       }
     } catch (e) {
       if (isNoKeyError(e)) goToSettings();
@@ -105,6 +112,13 @@ export default function ChatScreen() {
       {planNote ? (
         <View style={{ gap: spacing.sm }}>
           <AppText variant="caption">{planNote}</AppText>
+          {betterDays !== null && !pending ? (
+            <Chips
+              label="Quick replies"
+              options={[{ value: betterDays, label: `${betterDays} days` }]}
+              onChange={(days) => void send(planQuickReply(days))}
+            />
+          ) : null}
           <Button label="Go to Today" onPress={goToToday} />
         </View>
       ) : null}

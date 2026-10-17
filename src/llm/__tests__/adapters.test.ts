@@ -1,5 +1,11 @@
 import { buildAnthropicBody, parseAnthropicResponse } from '../adapters/anthropic';
-import { buildOpenAiBody, canUseJsonMode, completeOpenAiCompatible, parseOpenAiResponse } from '../adapters/openaiCompatible';
+import {
+  buildOpenAiBody,
+  canUseJsonMode,
+  completeOpenAiCompatible,
+  needsCacheMarkers,
+  parseOpenAiResponse,
+} from '../adapters/openaiCompatible';
 import type { CompletionRequest } from '../jsonCompletion';
 import { PROVIDERS, resolveBaseUrl, resolveModel } from '../providers';
 import type { AppSettings } from '../../types';
@@ -65,6 +71,93 @@ describe('anthropic adapter', () => {
   it('rejects refusals and empty replies', () => {
     expect(() => parseAnthropicResponse({ stop_reason: 'refusal', content: [] })).toThrow(/declined/);
     expect(() => parseAnthropicResponse({ content: [] })).toThrow();
+  });
+});
+
+describe('prompt caching', () => {
+  const EPH = { type: 'ephemeral' };
+  const chat: CompletionRequest = {
+    system: 'You are a tutor.',
+    messages: [
+      { role: 'user', content: 'a' },
+      { role: 'assistant', content: 'b' },
+      { role: 'user', content: 'c' },
+    ],
+  };
+
+  it('anthropic: sends plain strings with no cache flag', () => {
+    const body = buildAnthropicBody('claude-haiku-5-5', chat);
+    expect(body.system).toBe('You are a tutor.');
+    expect(body.messages).toEqual(chat.messages);
+    expect(JSON.stringify(body)).not.toContain('cache_control');
+  });
+
+  it("anthropic: 'system' marks only the system prompt", () => {
+    const body = buildAnthropicBody('claude-haiku-5-5', { ...chat, cache: 'system' });
+    expect(body.system).toEqual([{ type: 'text', text: 'You are a tutor.', cache_control: EPH }]);
+    expect(body.messages).toEqual(chat.messages);
+    expect(body).not.toHaveProperty('cache_control');
+  });
+
+  it("anthropic: 'conversation' also marks the newest message, two breakpoints in all", () => {
+    const body = buildAnthropicBody('claude-haiku-5-5', { ...chat, cache: 'conversation' });
+    expect(body.system).toEqual([{ type: 'text', text: 'You are a tutor.', cache_control: EPH }]);
+    expect(body.messages).toEqual([
+      { role: 'user', content: 'a' },
+      { role: 'assistant', content: 'b' },
+      { role: 'user', content: [{ type: 'text', text: 'c', cache_control: EPH }] },
+    ]);
+    expect(JSON.stringify(body).match(/cache_control/g)).toHaveLength(2);
+  });
+
+  it('detects Anthropic models behind OpenRouter only', () => {
+    expect(needsCacheMarkers('https://openrouter.ai/api/v1', 'anthropic/claude-haiku-5-5')).toBe(true);
+    expect(needsCacheMarkers('https://OpenRouter.ai/api/v1/', 'Anthropic/claude-sonnet-5-5')).toBe(true);
+    expect(needsCacheMarkers('https://openrouter.ai/api/v1', 'openai/gpt-6.1-sol')).toBe(false);
+    expect(needsCacheMarkers('https://openrouter.ai/api/v1', 'google/gemini-flash-latest')).toBe(false);
+    expect(needsCacheMarkers('https://openrouter.ai/api/v1', 'openrouter/free')).toBe(false);
+    expect(needsCacheMarkers('https://api.openai.com/v1', 'anthropic/claude-haiku-5-5')).toBe(false);
+    expect(needsCacheMarkers('https://openrouter.ai.evil.test/v1', 'anthropic/x')).toBe(false);
+    expect(needsCacheMarkers('not a url', 'anthropic/x')).toBe(false);
+  });
+
+  it('openai-compatible: stays plain for automatic-prefix providers even with a cache flag', () => {
+    const body = buildOpenAiBody('gpt-6.1-sol', { ...chat, cache: 'conversation' }, false, false);
+    expect(body.messages).toEqual([{ role: 'system', content: 'You are a tutor.' }, ...chat.messages]);
+    expect(JSON.stringify(body)).not.toContain('cache_control');
+  });
+
+  it("openrouter-anthropic: 'system' marks the system message as a content block", () => {
+    const body = buildOpenAiBody('anthropic/claude-haiku-5-5', { ...chat, cache: 'system' }, false, true);
+    expect(body.messages).toEqual([
+      { role: 'system', content: [{ type: 'text', text: 'You are a tutor.', cache_control: EPH }] },
+      ...chat.messages,
+    ]);
+  });
+
+  it("openrouter-anthropic: 'conversation' also marks the newest message", () => {
+    const body = buildOpenAiBody('anthropic/claude-haiku-5-5', { ...chat, cache: 'conversation' }, false, true);
+    const messages = body.messages as unknown[];
+    expect(messages[0]).toEqual({ role: 'system', content: [{ type: 'text', text: 'You are a tutor.', cache_control: EPH }] });
+    expect(messages[1]).toEqual({ role: 'user', content: 'a' });
+    expect(messages[3]).toEqual({ role: 'user', content: [{ type: 'text', text: 'c', cache_control: EPH }] });
+  });
+
+  it('openrouter-anthropic: no markers without a cache flag (one-off calls pay no write)', () => {
+    const body = buildOpenAiBody('anthropic/claude-haiku-5-5', chat, false, true);
+    expect(JSON.stringify(body)).not.toContain('cache_control');
+  });
+
+  it('sends markers over the wire only for OpenRouter Anthropic models', async () => {
+    const ok = { ok: true, status: 200, text: async () => JSON.stringify({ choices: [{ message: { content: 'x' } }] }), headers: { get: () => null } };
+    const fetchMock = jest.fn().mockResolvedValue(ok);
+    (globalThis as { fetch: unknown }).fetch = fetchMock;
+    const cached = { ...chat, cache: 'system' as const };
+
+    await completeOpenAiCompatible({ baseUrl: 'https://openrouter.ai/api/v1', model: 'anthropic/claude-haiku-5-5', apiKey: 'k' }, cached);
+    await completeOpenAiCompatible({ baseUrl: 'https://openrouter.ai/api/v1', model: 'deepseek/deepseek-chat', apiKey: 'k' }, cached);
+    expect(fetchMock.mock.calls[0][1].body).toContain('cache_control');
+    expect(fetchMock.mock.calls[1][1].body).not.toContain('cache_control');
   });
 });
 

@@ -33,6 +33,15 @@ describe('completeJsonWith', () => {
     expect(retry.messages[2].content).toContain('count');
   });
 
+  it('keeps the cached prefix on retry: same system, same cache mode, messages only appended', async () => {
+    const complete = transport('nope', '{"title":"A","count":1}');
+    await completeJsonWith(complete, { ...req, cache: 'system' }, schema);
+    const [first, retry] = complete.mock.calls.map((c) => c[0]);
+    expect(retry.system).toBe(first.system);
+    expect(retry.cache).toBe('system');
+    expect(retry.messages.slice(0, first.messages.length)).toEqual(first.messages);
+  });
+
   it('retries when the reply is not JSON at all', async () => {
     const complete = transport('I cannot do that.', '{"title":"A","count":1}');
     await expect(completeJsonWith(complete, req, schema)).resolves.toEqual({ title: 'A', count: 1 });

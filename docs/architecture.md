@@ -12,7 +12,7 @@ src/components  UI pieces, motion primitives, per-screen data loaders
 src/llm         provider calls, prompts, generation pipeline, chat
 src/plan        splitting cards into sessions
 src/streak      streak calculation (pure)
-src/topic       icon list, depth presets, suggestions (pure)
+src/topic       icon list, legacy depth presets, suggestions (pure)
 src/notifications  reminder scheduling
   │
 src/db          repositories over SQLite — the only place SQL lives
@@ -87,7 +87,7 @@ Navigation helpers are in `src/components/nav.ts`: `goToSettings`, `goToChat`, `
 
 1. `add-topic.tsx` checks for an API key for the active provider and redirects to Settings without one.
 2. A picked file is copied into the app's document directory (`importSourceFile`); pasted text is saved as a `.txt` file there.
-3. `createTopic` inserts the row with the typed text as its title, the chosen depth, and `source` set from whether material was given.
+3. `createTopic` inserts the row with the typed text as its title, the chosen plan length as `plan_days`, and `source` set from whether material was given.
 4. `runGeneration(topic.id)` starts in the background and the screen moves to the topic page.
 
 ### Generating content
@@ -96,8 +96,8 @@ Navigation helpers are in `src/components/nav.ts`: `goToSettings`, `goToChat`, `
 
 1. Build the outline if the topic has no units: from the file for uploaded material, from the model otherwise. The model's outline also carries a clean title, a book's author and an icon, which are saved onto the topic.
 2. For each unit not yet `done`, make one model call, replace the unit's cards, and mark it `done`. Each unit is saved before the next begins.
-3. If every unit is done the topic becomes `ready`; otherwise `failed`.
-4. If the topic already had a plan, the new cards are fitted back into it.
+3. After a book's outline, `fitDays` stretches `plan_days` if its chapters cannot fit 12 cards a day.
+4. If every unit is done the cards are split into `plan_days` sessions and the topic becomes `ready`; otherwise `failed`.
 
 ### Setting a plan
 
@@ -109,7 +109,7 @@ Navigation helpers are in `src/components/nav.ts`: `goToSettings`, `goToChat`, `
 ### Studying a session
 
 1. Today picks the next session with `listNextSessions()`: the lowest-index incomplete session of each `ready` topic.
-2. `SessionFeed` loads the session's cards and up to 10 due review cards, and tracks the visible page for the progress bar.
+2. `SessionFeed` loads the session's cards and up to 5 due review cards, and tracks the visible page for the progress bar.
 3. `CardPage` renders each card. Recall cards reveal on tap; quiz cards render `QuizOptions`, which reports right or wrong and, during review, records the result with `reviewCard`.
 4. Finish calls `completeSession(sessionId, todayLocal())`, which in one transaction:
    - sets `completed_at`;

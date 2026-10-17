@@ -14,14 +14,15 @@ Tagline: "Better books. A calmer mind."
 | Look up a table, a status value, or an invariant | [data-model.md](data-model.md) |
 | Work on providers, prompts, generation or chat | [llm.md](llm.md) |
 | Change colours, type, motion, mascots or icons | [design.md](design.md) |
+| Understand why a session is about 10 cards | [learning-science.md](learning-science.md) |
 | Add a feature, write a test, or see what is left to do | [development.md](development.md) |
 
 ## The app in one page
 
 1. The user pastes an API key per provider in **Settings** and picks the active provider and its model.
-2. They **add a topic** by answering "What do you want to learn?", picking a depth, and optionally attaching their own material (pdf, epub, txt, md, or pasted text).
+2. They **add a topic** by answering "What do you want to learn?", picking how long they want to take (3 days to 1 month), and optionally attaching their own material (pdf, epub, txt, md, or pasted text).
 3. The model decides whether the request is a book it knows or an open topic, and builds an outline of **units**. The app then generates a summary and cards for each unit, saving after every unit.
-4. In **Chat** the user says how many days they want to finish in. The app splits the cards into that many **sessions**.
+4. The plan length sized the content, so the app splits the cards into that many **sessions** of about 10 cards each. **Chat** answers questions and can change the plan later.
 5. **Today** shows the next session as a vertical feed, one card per page, with a progress bar. Finishing a session records activity for the day and celebrates.
 6. A **streak** counts active days, with one missed day forgiven. Local **reminders** fire in the evening.
 7. Recall and quiz cards from finished sessions come back later for **spaced review**.

@@ -33,7 +33,7 @@ Unit tests cover pure logic only and live in `__tests__/` folders next to the co
 | Plan splitter | `src/plan/__tests__/splitPlan.test.ts` |
 | Reminder schedule and copy | `src/notifications/__tests__/` |
 | Leitner intervals | `src/db/__tests__/leitner.test.ts` |
-| Topic icons, depth, suggestions | `src/topic/__tests__/topic.test.ts` |
+| Topic icons, legacy depth, suggestions | `src/topic/__tests__/topic.test.ts` |
 | LLM layer | `src/llm/__tests__/` (see [llm.md](llm.md)) |
 
 There are no component or end-to-end tests. Notifications, offline behaviour and generation resume are checked by hand on a device; the checklist is in [setup.md](setup.md).
@@ -94,9 +94,9 @@ All of it is in `src/streak/computeStreak.ts`. `MAX_GAP = 2` encodes the grace r
 - **Icon:** add an Ionicons glyph name to `TOPIC_ICONS` in `src/topic/icons.ts`. The outline prompt lists them, so the model can pick it at once.
 - **Suggestion:** add a line to `SUGGESTIONS` in `src/topic/suggestions.ts`. Books work best written as "Title by Author".
 
-### Change depth
+### Change session size or plan lengths
 
-Unit and card ranges per depth are in `DEPTHS` in `src/topic/depth.ts`. The outline prompt and `cardCountRange` read them from there.
+`src/plan/budget.ts` holds the cards per session (10, cap 12), cards per unit (3 to 12), units per open topic and the plan lengths offered on New topic. `REVIEW_LIMIT` in `src/components/today/SessionFeed.tsx` caps review cards per session (5). Read [learning-science.md](learning-science.md) before changing them. `DEPTHS` in `src/topic/depth.ts` only serves topics created before plan length existed.
 
 ### Add an animation
 

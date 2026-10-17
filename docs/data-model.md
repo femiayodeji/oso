@@ -15,10 +15,10 @@ CREATE TABLE topics (
   file_uri TEXT,
   status TEXT NOT NULL DEFAULT 'draft'
     CHECK (status IN ('draft','generating','ready','failed','finished')),
-  plan_days INTEGER,
+  plan_days INTEGER,              -- set when the topic is added; may be stretched after a book's outline
   created_at TEXT NOT NULL,
   icon TEXT,                      -- a name from src/topic/icons.ts
-  depth TEXT CHECK (depth IN ('quick','solid','deep'))
+  depth TEXT CHECK (depth IN ('quick','solid','deep'))  -- legacy: null for topics with a plan length
 );
 
 CREATE TABLE units (

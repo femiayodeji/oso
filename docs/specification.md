@@ -43,17 +43,16 @@ A topic moves through these statuses:
 | `failed` | Generation stopped with at least one unit not done |
 | `finished` | Every session is completed |
 
-### Depth
+### Plan length
 
-Chosen when adding a topic. It sets how much there is to learn:
+Chosen when adding a topic ("How long?": 3 days, 1 week (default), 2 weeks, 1 month) and stored as `plan_days` before anything is generated. It sizes the content, so every session lands near **10 new cards** (at most 12), about 5 minutes. The reasoning is in [learning-science.md](learning-science.md).
 
-| Depth | Open topic | Book (cards per unit) |
-|---|---|---|
-| Quick taste | 4 to 6 units | 4 to 6 |
-| Solid (default) | 8 to 12 units | 6 to 9 |
-| Deep dive | 16 to 24 units | 8 to 12 |
+- **Card budget** = days × 10.
+- **Open topic:** about one unit per 8 cards, 3 to 40 units (3 days gives 4 units, 1 week 9, 2 weeks 18, 1 month 38).
+- **Cards per unit:** the budget shared across the units, 3 to 12 each. With uploaded material a longer unit gets a bigger share.
+- **Book or uploaded material:** keeps its own chapters. If even 3 cards per chapter would mean more than 12 a day, the plan is stretched to the fewest days that fit (a 30-chapter book on 3 days becomes 8 days). The topic screen says so in one line.
 
-A book keeps its own chapters, so depth only changes how many cards each one gets. Uploaded material sizes its cards by the unit's length instead.
+Topics created before plan length existed keep their old depth (quick, solid, deep), which still sets their unit and card ranges.
 
 ### Unit
 
@@ -78,13 +77,14 @@ A day's learning: an ordered run of cards. Sessions form an **ordered pool per t
 
 ### Plan
 
-The plan is the number of days the learner wants to take. It is set only through chat (for example "finish this in 5 days"):
+The plan is the number of days the learner wants to take. It is first set when adding the topic, and the cards are split into sessions as soon as generation finishes. After that it changes only through chat (for example "finish this in 5 days"):
 
 - The model returns a structured action, `{"action":"set_plan","days":5}`. The app parses, validates and applies it. Free text never changes the plan.
 - `days` means **days remaining from now**, not the plan's total length.
 - The app splits the unstudied cards into that many balanced, contiguous sessions.
 - **Completed sessions are immutable.** Changing the plan only re-splits cards that are not in a completed session.
-- All content is generated and saved before a plan can be set.
+- All content is generated and saved before the plan is applied.
+- **Warn, don't block.** If a new plan means more than 12 cards a day, the confirmation says how many and offers the number of days that keeps it near 10 as a chip. If the learner insists, the app does what they asked.
 
 ### Streak
 
@@ -103,7 +103,7 @@ Recall and quiz cards use Leitner boxes 1 to 5 with intervals of 1, 3, 7, 14 and
 
 - A recall or quiz card enters box 1 when its session is completed.
 - For recall cards, "Got it" moves the card up one box and "Not yet" sends it back to box 1. For quiz cards, a right answer counts as "Got it" and a wrong one as "Not yet".
-- Up to 10 due review cards are appended to a session's feed after its own cards.
+- Up to 5 due review cards are appended to a session's feed after its own cards.
 - When there is nothing else to do, due cards can be reviewed on their own.
 
 ## Screens
@@ -115,7 +115,7 @@ Three tabs, plus stack screens opened from them.
 | Today | `/` | The feed for the next session, or an empty state |
 | Topics | `/topics` | List of topics, each with its icon and a status line |
 | Settings | `/settings` | Provider and API keys, model, reminders, appearance, sounds |
-| New topic | `/add-topic?q=` | "What do you want to learn?", suggestions, depth, optional own material |
+| New topic | `/add-topic?q=` | "What do you want to learn?", suggestions, plan length, optional own material |
 | Topic | `/topic/[id]` | Generation progress, plan, session pool, units, regenerate and delete |
 | Chat | `/chat?topicId=` | Questions about the topic and setting the plan |
 
@@ -132,23 +132,24 @@ Three tabs, plus stack screens opened from them.
 
 - One large field: "What do you want to learn?". A tapped suggestion fills it; `?q=` prefills it when arriving from a suggestion elsewhere.
 - Six suggestions, which change daily.
-- Depth chips: Quick taste, Solid, Deep dive. Hidden when a file is attached, because the file decides the units.
+- "How long?" chips: 3 days, 1 week, 2 weeks, 1 month, captioned "About 10 cards a day, 5 minutes."
 - "Use my own material" reveals file picking and a paste field.
 - **Start learning** creates the topic, starts generation, and opens the topic screen.
 
 ### Topic
 
 - While generating: "Preparing units, X of Y" with a progress bar. If the app was closed mid-generation, a **Retry** button appears.
-- When prepared: the plan summary with a progress bar, the session pool (tap a session to study it in Today), and the unit list.
+- When prepared: the plan summary with its pace ("About 10 cards a day") and a progress bar, a one-line note when a book's chapter count set the plan length, the session pool (tap a session to study it in Today), and the unit list.
 - Actions: attach or replace a file and regenerate, regenerate, delete. Regenerating replaces units, cards and sessions; the streak is kept.
 
 ### Chat
 
 - Grounded in one topic: the system prompt carries the unit summaries and the plan state.
 - Only recent history is sent (the last 12 messages).
-- With no plan set, quick-reply chips offer 5, 7 and 14 days.
+- With no plan set (older topics only), quick-reply chips offer 5, 7 and 14 days.
+- History is dropped in steps of 6 once it passes 12 messages, so the provider's prompt cache can reuse it.
 - While waiting for a reply, the thinking panda wiggles beside three hopping dots.
-- When the plan changes, the UI confirms it and offers **Go to Today**.
+- When the plan changes, the happy panda confirms it and offers **Go to Today**, plus a chip with better days when the plan is heavier than 12 cards a day.
 
 ### Settings
 
@@ -178,7 +179,7 @@ Each is one line of text plus one button, with a mascot that pops in and floats 
 | Settings, no API key | Add an API key to start. | (the key field is highlighted) |
 | Notifications denied | Reminders are off. | Enable reminders |
 
-**First-run flow:** Settings (API key) → New topic → Chat to set the plan → Today. Each empty state routes to the next step; there is no tutorial.
+**First-run flow:** Settings (API key) → New topic (with its plan length) → Today. Chat is for questions and changing the plan later. Each empty state routes to the next step; there is no tutorial.
 
 Any LLM action taken without an API key for the active provider sends the user to Settings instead of showing an error.
 

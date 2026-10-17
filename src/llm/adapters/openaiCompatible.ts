@@ -1,6 +1,7 @@
 import { LlmError } from '../errors';
 import { postJson } from '../http';
 import type { CompletionRequest } from '../jsonCompletion';
+import { cachedSystem, withCachedLastMessage } from './anthropic';
 
 export type AdapterConfig = { baseUrl: string; model: string; apiKey: string };
 
@@ -11,10 +12,27 @@ export function canUseJsonMode(req: CompletionRequest): boolean {
   return /json/i.test(haystack);
 }
 
-export function buildOpenAiBody(model: string, req: CompletionRequest, jsonMode: boolean): Record<string, unknown> {
+// OpenAI, DeepSeek, Gemini, Groq and most OpenRouter models cache a repeated prefix on their
+// own, so for them the request stays plain and caching just needs a stable prefix. Anthropic
+// models behind OpenRouter only cache with explicit cache_control markers on content blocks.
+export function needsCacheMarkers(baseUrl: string, model: string): boolean {
+  // A regex, not URL.hostname: React Native's URL polyfill does not implement it everywhere.
+  const host = (/^https?:\/\/([^/:?#]+)/i.exec(baseUrl.trim())?.[1] ?? '').toLowerCase();
+  const isOpenRouter = host === 'openrouter.ai' || host.endsWith('.openrouter.ai');
+  return isOpenRouter && /^anthropic\//i.test(model.trim());
+}
+
+export function buildOpenAiBody(
+  model: string,
+  req: CompletionRequest,
+  jsonMode: boolean,
+  cacheMarkers = false,
+): Record<string, unknown> {
+  const mark = cacheMarkers ? req.cache : undefined;
+  const history = req.messages.map((m) => ({ role: m.role, content: m.content }));
   const messages = [
-    ...(req.system ? [{ role: 'system', content: req.system }] : []),
-    ...req.messages.map((m) => ({ role: m.role, content: m.content })),
+    ...(req.system ? [{ role: 'system', content: mark ? cachedSystem(req.system) : req.system }] : []),
+    ...(mark === 'conversation' ? withCachedLastMessage(history) : history),
   ];
   return {
     model,
@@ -40,10 +58,11 @@ export function parseOpenAiResponse(data: unknown): string {
 
 export async function completeOpenAiCompatible(config: AdapterConfig, req: CompletionRequest): Promise<string> {
   const url = `${config.baseUrl.replace(/\/+$/, '')}/chat/completions`;
+  const cacheMarkers = needsCacheMarkers(config.baseUrl, config.model);
   const send = (jsonMode: boolean) =>
     postJson(url, {
       headers: { authorization: `Bearer ${config.apiKey}` },
-      body: buildOpenAiBody(config.model, req, jsonMode),
+      body: buildOpenAiBody(config.model, req, jsonMode, cacheMarkers),
       secrets: [config.apiKey],
     });
 

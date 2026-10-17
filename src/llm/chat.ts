@@ -50,6 +50,8 @@ export async function sendChatMessage(
       sessionsCompleted: sessions.filter((t) => t.completedAt !== null).length,
     }),
     messages: [...toHistory(previous), { role: 'user', content: text }],
+    // The next turn resends this system prompt and history unchanged, so cache both.
+    cache: 'conversation',
   });
 
   const parsed = parseChatReply(raw);

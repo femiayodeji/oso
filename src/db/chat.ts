@@ -50,6 +50,14 @@ export async function listChatMessages(
   return rows.map(toMessage);
 }
 
+export async function countChatMessages(topicId: number | null): Promise<number> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ n: number }>('SELECT COUNT(*) AS n FROM chat_messages WHERE topic_id IS ?', [
+    topicId,
+  ]);
+  return row?.n ?? 0;
+}
+
 export async function clearChat(topicId: number | null): Promise<void> {
   await write('DELETE FROM chat_messages WHERE topic_id IS ?', [topicId]);
 }

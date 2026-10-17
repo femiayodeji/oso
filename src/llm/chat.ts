@@ -1,13 +1,14 @@
 import { getTopic } from '../db/topics';
 import { listCardsForTopic } from '../db/cards';
 import { listUnitHeads } from '../db/units';
-import { addChatMessage, listChatMessages } from '../db/chat';
+import { addChatMessage, countChatMessages, listChatMessages } from '../db/chat';
 import { listSessions } from '../db/sessions';
 import { applyPlan } from '../plan/applyPlan';
 import { hasApiKey } from './apiKey';
 import { parseChatReply } from './chatReply';
 import { complete, type LlmMessage } from './client';
 import { LlmError } from './errors';
+import { historyWindow } from './history';
 import { CHAT_FALLBACKS, chatSystemPrompt } from './prompts';
 
 // `days` is the number of days remaining that the reader asked for. `sessionCount` is the
@@ -22,6 +23,7 @@ export type ChatAction = {
 };
 
 const HISTORY_LIMIT = 12;
+const HISTORY_STEP = 6;
 
 // Recent turns only, starting on a user turn as the Anthropic API requires.
 function toHistory(messages: { role: 'user' | 'assistant'; content: string }[]): LlmMessage[] {
@@ -37,12 +39,13 @@ export async function sendChatMessage(
   const topic = await getTopic(topicId);
   if (!topic) throw new LlmError('bad_response', 'This topic no longer exists.');
 
-  const [units, cards, sessions, previous] = await Promise.all([
+  const [units, cards, sessions, total] = await Promise.all([
     listUnitHeads(topicId),
     listCardsForTopic(topicId),
     listSessions(topicId),
-    listChatMessages(topicId, HISTORY_LIMIT),
+    countChatMessages(topicId),
   ]);
+  const previous = await listChatMessages(topicId, historyWindow(total, HISTORY_LIMIT, HISTORY_STEP));
   // A failed or half-prepared topic has cards too, but its content is incomplete.
   const cardsReady = cards.length > 0 && (topic.status === 'ready' || topic.status === 'finished');
   const completed = new Set(sessions.filter((t) => t.completedAt !== null).map((t) => t.id));

@@ -152,20 +152,12 @@ export default function TodayScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <TopicBadge topic={{ id: active.topicId, icon: activeTopic?.icon ?? null }} size={36} />
             <View style={{ flex: 1, minWidth: 0 }}>
-              <AppText variant="bodyStrong" numberOfLines={1}>
-                {active.topicTitle}
+              {/* Full names, wrapping: a cut-off topic or module name hides where you are. */}
+              <AppText variant="bodyStrong">{active.topicTitle}</AppText>
+              <AppText variant="caption">
+                {active.retake ? `Retake  ·  ${active.title}` : active.title}
+                {activeTopic?.source === 'model_knowledge' ? '  ·  model knowledge' : ''}
               </AppText>
-              {/* A long session title truncates; the source label after it stays whole. */}
-              <View style={{ flexDirection: 'row' }}>
-                <AppText variant="caption" numberOfLines={1} style={{ flexShrink: 1 }}>
-                  {active.retake ? `Retake  ·  ${active.title}` : active.title}
-                </AppText>
-                {activeTopic?.source === 'model_knowledge' ? (
-                  <AppText variant="caption" numberOfLines={1}>
-                    {'  ·  model knowledge'}
-                  </AppText>
-                ) : null}
-              </View>
             </View>
           </View>
           {!picked && nextSessions.length > 1 ? (

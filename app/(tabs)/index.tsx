@@ -201,7 +201,8 @@ export default function TodayScreen() {
   );
 }
 
-// The next session of the chosen topic, else of the topic last read, else of the oldest topic.
+// The next session of the chosen topic, else of the topic last read, else of the topic studied
+// most recently.
 function nextFor(data: TodayData, topicId: number | null) {
   const preferred = topicId ?? data.lastTopicId;
   return data.nextSessions.find((t) => t.topicId === preferred) ?? data.nextSessions[0];

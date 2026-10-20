@@ -2,6 +2,7 @@ import { nowIso } from '../lib/dates';
 import type { TopicStatus, Session } from '../types';
 import { getDb, withTransaction } from './index';
 import { initialReview } from './leitner';
+import { lastStudied } from './topics';
 
 export type SessionWithTopic = Session & { topicTitle: string };
 
@@ -42,7 +43,8 @@ export async function getSession(id: number): Promise<Session | null> {
   return row ? toSession(row) : null;
 }
 
-// One row per 'ready' topic: its lowest-idx incomplete session. Oldest topic first.
+// One row per 'ready' topic: its lowest-idx incomplete session. Most recently studied topic
+// first (see lastStudied in topics.ts), then oldest created.
 export async function listNextSessions(): Promise<SessionWithTopic[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<SessionWithTopicRow>(
@@ -55,7 +57,7 @@ export async function listNextSessions(): Promise<SessionWithTopic[]> {
          WHERE n.topic_id = b.id AND n.completed_at IS NULL
          ORDER BY n.idx, n.id LIMIT 1
        )
-     ORDER BY b.created_at, b.id`,
+     ORDER BY ${lastStudied('b')} DESC, b.created_at, b.id`,
     [],
   );
   return rows.map((row) => ({ ...toSession(row), topicTitle: row.topic_title }));

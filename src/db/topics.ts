@@ -89,10 +89,17 @@ export async function getTopic(id: number): Promise<Topic | null> {
   return row ? toTopic(row) : null;
 }
 
+// When a topic's latest session was completed; null if none was. Sorting DESC puts null last
+// (SQLite treats null as smallest). Review never completes a session, so it never reorders.
+export function lastStudied(topicAlias: string): string {
+  return `(SELECT MAX(s.completed_at) FROM sessions s WHERE s.topic_id = ${topicAlias}.id)`;
+}
+
+// Most recently studied first, then newest created.
 export async function listTopics(): Promise<Topic[]> {
   const db = await getDb();
   const rows = await db.getAllAsync<TopicRow>(
-    'SELECT * FROM topics ORDER BY created_at DESC, id DESC',
+    `SELECT * FROM topics t ORDER BY ${lastStudied('t')} DESC, t.created_at DESC, t.id DESC`,
     [],
   );
   return rows.map(toTopic);

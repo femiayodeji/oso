@@ -151,19 +151,27 @@ export default function TodayScreen() {
         <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.sm, gap: spacing.xs }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
             <TopicBadge topic={{ id: active.topicId, icon: activeTopic?.icon ?? null }} size={36} />
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, minWidth: 0 }}>
               <AppText variant="bodyStrong" numberOfLines={1}>
                 {active.topicTitle}
               </AppText>
-              <AppText variant="caption" numberOfLines={1}>
-                {active.retake ? `Retake  ·  ${active.title}` : active.title}
-                {activeTopic?.source === 'model_knowledge' ? '  ·  model knowledge' : ''}
-              </AppText>
+              {/* A long session title truncates; the source label after it stays whole. */}
+              <View style={{ flexDirection: 'row' }}>
+                <AppText variant="caption" numberOfLines={1} style={{ flexShrink: 1 }}>
+                  {active.retake ? `Retake  ·  ${active.title}` : active.title}
+                </AppText>
+                {activeTopic?.source === 'model_knowledge' ? (
+                  <AppText variant="caption" numberOfLines={1}>
+                    {'  ·  model knowledge'}
+                  </AppText>
+                ) : null}
+              </View>
             </View>
           </View>
           {!picked && nextSessions.length > 1 ? (
-            <View style={{ paddingTop: spacing.sm }}>
+            <View style={{ paddingTop: spacing.sm, marginHorizontal: -spacing.xl }}>
               <Chips
+                scroll
                 label="Topic"
                 value={active.topicId}
                 onChange={setTopicId}
@@ -214,7 +222,8 @@ export default function TodayScreen() {
   );
 }
 
-// The next session of the chosen topic, else of the topic last read, else of the oldest topic.
+// The next session of the chosen topic, else of the topic last read, else of the topic studied
+// most recently.
 function nextFor(data: TodayData, topicId: number | null) {
   const preferred = topicId ?? data.lastTopicId;
   return data.nextSessions.find((t) => t.topicId === preferred) ?? data.nextSessions[0];

@@ -47,6 +47,8 @@ interface Props {
 export function SessionFeed({ session, onCompleted }: Props) {
   const sessionId = session?.id ?? null;
   const topicId = session?.topicId;
+  // A retake is read-only practice: no review cards, and finishing records nothing.
+  const retake = session?.retake === true;
   const listRef = useRef<FlatList<Item>>(null);
   const dragging = useRef(false);
   const settle = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -69,7 +71,9 @@ export function SessionFeed({ session, onCompleted }: Props) {
     Promise.all([
       sessionId == null ? Promise.resolve<Card[]>([]) : listCardsForSession(sessionId),
       // A session only brings back its own topic's cards; the review-only feed takes every topic.
-      listDueReviewCards(todayLocal(), { excludeSessionId: sessionId ?? undefined, topicId, limit: REVIEW_LIMIT }),
+      retake
+        ? Promise.resolve<Card[]>([])
+        : listDueReviewCards(todayLocal(), { excludeSessionId: sessionId ?? undefined, topicId, limit: REVIEW_LIMIT }),
     ])
       .then(([own, due]) => {
         if (!alive) return;
@@ -82,7 +86,7 @@ export function SessionFeed({ session, onCompleted }: Props) {
     return () => {
       alive = false;
     };
-  }, [sessionId, topicId]);
+  }, [sessionId, topicId, retake]);
 
   const items = useMemo<Item[]>(
     () => [
@@ -102,6 +106,12 @@ export function SessionFeed({ session, onCompleted }: Props) {
   const finish = async () => {
     // A review-only session completes no session, so it is not streak activity.
     if (sessionId == null) {
+      onCompleted(false);
+      return;
+    }
+    // Completed sessions are immutable, so a retake never touches the database.
+    if (retake) {
+      playSound('streak');
       onCompleted(false);
       return;
     }

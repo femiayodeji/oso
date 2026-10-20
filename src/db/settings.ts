@@ -1,4 +1,4 @@
-import type { AppSettings, ColorSchemeSetting, Provider } from '../types';
+import type { AppSettings, ColorSchemeSetting, PaletteSetting, Provider } from '../types';
 import { getDb, withTransaction } from './index';
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -8,12 +8,14 @@ export const DEFAULT_SETTINGS: AppSettings = {
   reminderEvening: '18:00',
   reminderLate: '21:00',
   colorScheme: 'system',
+  palette: 'standard',
   soundsEnabled: true,
   bestStreak: 0,
 };
 
 const PROVIDERS: Provider[] = ['openrouter', 'gemini', 'groq', 'anthropic', 'openai'];
 const COLOR_SCHEMES: ColorSchemeSetting[] = ['system', 'light', 'dark'];
+const PALETTES: PaletteSetting[] = ['standard', 'reading'];
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function oneOf<T extends string>(allowed: T[], value: string | undefined, fallback: T): T {
@@ -32,7 +34,7 @@ function time(value: string | undefined, fallback: string): string {
 }
 
 // Stored values are strings; anything missing or unreadable falls back to the default.
-function parse(stored: Map<string, string>): AppSettings {
+export function parseSettings(stored: Map<string, string>): AppSettings {
   const d = DEFAULT_SETTINGS;
   const best = Number(stored.get('bestStreak'));
   const sounds = stored.get('soundsEnabled');
@@ -44,6 +46,7 @@ function parse(stored: Map<string, string>): AppSettings {
     reminderEvening: time(stored.get('reminderEvening'), d.reminderEvening),
     reminderLate: time(stored.get('reminderLate'), d.reminderLate),
     colorScheme: oneOf(COLOR_SCHEMES, stored.get('colorScheme'), d.colorScheme),
+    palette: oneOf(PALETTES, stored.get('palette'), d.palette),
     soundsEnabled: sounds === undefined ? d.soundsEnabled : sounds === 'true',
     bestStreak: Number.isInteger(best) && best > 0 ? best : d.bestStreak,
   };
@@ -55,7 +58,7 @@ export async function getSettings(): Promise<AppSettings> {
     'SELECT key, value FROM settings',
     [],
   );
-  return parse(new Map(rows.map((r) => [r.key, r.value])));
+  return parseSettings(new Map(rows.map((r) => [r.key, r.value])));
 }
 
 // The topic last read on Today, so the tab opens on it again. Kept out of AppSettings: it is

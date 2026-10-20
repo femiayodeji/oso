@@ -68,6 +68,7 @@ export interface ChatMessage {
 
 export type Provider = 'openrouter' | 'gemini' | 'groq' | 'anthropic' | 'openai';
 export type ColorSchemeSetting = 'system' | 'light' | 'dark';
+export type PaletteSetting = 'standard' | 'reading';
 
 // Non-secret settings, stored as strings in the `settings` table.
 // The API key is NOT here; it lives in SecureStore only.
@@ -78,6 +79,7 @@ export interface AppSettings {
   reminderEvening: string; // 'HH:MM', 24h local
   reminderLate: string; // 'HH:MM', 24h local
   colorScheme: ColorSchemeSetting;
+  palette: PaletteSetting;
   soundsEnabled: boolean;
   bestStreak: number;
 }

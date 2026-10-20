@@ -14,7 +14,7 @@ const req: CompletionRequest = { system: 'Return JSON only.', messages: [{ role:
 
 const settings = (patch: Partial<AppSettings>): AppSettings => ({
   provider: 'openrouter', baseUrl: PROVIDERS.openrouter.baseUrl, model: '', reminderEvening: '18:00',
-  reminderLate: '21:00', colorScheme: 'system', soundsEnabled: true, bestStreak: 0, ...patch,
+  reminderLate: '21:00', colorScheme: 'system', palette: 'standard', soundsEnabled: true, bestStreak: 0, ...patch,
 });
 
 describe('openai-compatible adapter', () => {

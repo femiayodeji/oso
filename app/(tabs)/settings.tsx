@@ -17,12 +17,17 @@ import { providersWithKey } from '../../src/llm/apiKey';
 import { getPermissionStatus } from '../../src/notifications';
 import { useSettings } from '../../src/settings/SettingsContext';
 import { useTheme } from '../../src/theme';
-import type { ColorSchemeSetting } from '../../src/types';
+import type { ColorSchemeSetting, PaletteSetting } from '../../src/types';
 
 const APPEARANCE: { value: ColorSchemeSetting; label: string }[] = [
   { value: 'system', label: 'System' },
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
+];
+
+const STYLES: { value: PaletteSetting; label: string }[] = [
+  { value: 'standard', label: 'Standard' },
+  { value: 'reading', label: 'Reading' },
 ];
 
 const CREDIT_URL = 'https://femiayodeji.github.io/';
@@ -74,6 +79,13 @@ export default function SettingsScreen() {
           options={APPEARANCE}
           value={settings.colorScheme}
           onChange={(colorScheme) => void update({ colorScheme }).catch(() => {})}
+        />
+        <AppText variant="bodyStrong">Style</AppText>
+        <Chips
+          label="Style"
+          options={STYLES}
+          value={settings.palette}
+          onChange={(palette) => void update({ palette }).catch(() => {})}
         />
       </Section>
 

@@ -14,6 +14,8 @@ export interface ColorTokens {
 }
 
 export type Scheme = 'light' | 'dark';
+// Reading is a warm paper variant of both schemes, chosen in Settings.
+export type PaletteStyle = 'standard' | 'reading';
 
 export const palette: Record<Scheme, ColorTokens> = {
   light: {
@@ -41,6 +43,38 @@ export const palette: Record<Scheme, ColorTokens> = {
     scrim: 'rgba(8, 11, 9, 0.7)',
   },
 };
+
+// Warm sepia paper by day, warm charcoal-brown by night. Same green accent family, tuned for AA.
+export const readingPalette: Record<Scheme, ColorTokens> = {
+  light: {
+    background: '#F4ECD8',
+    surface: '#EBE1C9',
+    text: '#2E241A',
+    textMuted: '#6E5E4B',
+    border: '#DDD0B3',
+    accent: '#1D6343',
+    accentShade: '#123F2A',
+    onAccent: '#F4ECD8',
+    danger: '#A63A28',
+    scrim: 'rgba(46, 36, 26, 0.45)',
+  },
+  dark: {
+    background: '#1E1A16',
+    surface: '#28231D',
+    text: '#E6DCC8',
+    textMuted: '#A89A85',
+    border: '#3A332A',
+    accent: '#5FB58A',
+    accentShade: '#357857',
+    onAccent: '#1A1611',
+    danger: '#E08A70',
+    scrim: 'rgba(12, 10, 8, 0.7)',
+  },
+};
+
+export function pickPalette(style: PaletteStyle, scheme: Scheme): ColorTokens {
+  return (style === 'reading' ? readingPalette : palette)[scheme];
+}
 
 // Confetti only: the celebration on finishing a session or a topic.
 export const celebration: Record<Scheme, string[]> = {

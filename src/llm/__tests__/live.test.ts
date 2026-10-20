@@ -18,6 +18,7 @@ const mockState: { key: string | null; settings: AppSettings } = {
     reminderEvening: '18:00',
     reminderLate: '21:00',
     colorScheme: 'system',
+    palette: 'standard',
     soundsEnabled: true,
     bestStreak: 0,
   },

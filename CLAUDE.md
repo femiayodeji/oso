@@ -161,7 +161,7 @@ Local scheduled notifications only. No push server.
 
 - **Three screens**: Today (feed), Topics, Settings. Chat opens from one button.
 - Text-only cards, one idea per card, generous whitespace, **one readable font**, vertical swipe feed.
-- Neutral background, **dark mode** support, **one accent color**.
+- Neutral background, **dark mode** and a warm **Reading** style, **one accent color** per palette.
 - Streak: small number and icon in a corner; the flame jumps when the streak goes up. Finishing a session or topic shows confetti and a popping checkmark. No popups or modals for celebrations.
 - Confirmations (delete, regenerate) use the themed `Dialog` (`src/components/Dialog.tsx`, via `useConfirm()`), never native `Alert`.
 - Mascot (panda) appears in empty states and chat, with a gentle idle float. No wizard theming in the UI.
@@ -193,22 +193,23 @@ Reference mockup: `docs/design/oso-brand-sheet.png` (icons and mascot states).
 
 Define all colors once as tokens. Components never use raw hex values.
 
-| Token | Light | Dark |
-|---|---|---|
-| `background` | `#F7F6F2` | `#121614` |
-| `surface` | `#EFEDE6` | `#1B201D` |
-| `text` | `#1A1F1C` | `#E8E6E1` |
-| `textMuted` | `#6B726D` | `#9AA29C` |
-| `border` | `#E2DFD6` | `#2A302C` |
-| `accent` | `#1F6B4A` | `#4FB387` |
-| `accentShade` | `#14482F` | `#2F7A57` |
-| `onAccent` | `#F7F6F2` | `#0E1411` |
-| `danger` | `#B3412F` | `#E07A67` |
-| `scrim` | `rgba(26,31,28,0.45)` | `rgba(8,11,9,0.7)` |
+| Token | Light | Dark | Reading light | Reading dark |
+|---|---|---|---|---|
+| `background` | `#F7F6F2` | `#121614` | `#F4ECD8` | `#1E1A16` |
+| `surface` | `#EFEDE6` | `#1B201D` | `#EBE1C9` | `#28231D` |
+| `text` | `#1A1F1C` | `#E8E6E1` | `#2E241A` | `#E6DCC8` |
+| `textMuted` | `#6B726D` | `#9AA29C` | `#6E5E4B` | `#A89A85` |
+| `border` | `#E2DFD6` | `#2A302C` | `#DDD0B3` | `#3A332A` |
+| `accent` | `#1F6B4A` | `#4FB387` | `#1D6343` | `#5FB58A` |
+| `accentShade` | `#14482F` | `#2F7A57` | `#123F2A` | `#357857` |
+| `onAccent` | `#F7F6F2` | `#0E1411` | `#F4ECD8` | `#1A1611` |
+| `danger` | `#B3412F` | `#E07A67` | `#A63A28` | `#E08A70` |
+| `scrim` | `rgba(26,31,28,0.45)` | `rgba(8,11,9,0.7)` | `rgba(46,36,26,0.45)` | `rgba(12,10,8,0.7)` |
 
 - Follow the system color scheme by default. Manual override lives in Settings.
+- **Reading** is a warm paper variant of both light and dark, chosen in Settings (Style: Standard / Reading) on top of the light/dark choice. `pickPalette(style, scheme)` in `src/theme/tokens.ts` selects the colours; text, `textMuted`, `accent` and `danger` meet WCAG AA on `background` and `surface` in every palette. `celebration` stays per scheme.
 - **Never use pure white or pure black** as a background.
-- **Accent is used only for:** the streak badge, primary buttons (with `accentShade` as their lip), the active tab, progress bars, and the "done" checkmark. Confetti uses the `celebration` colours in `src/theme/tokens.ts`, and nothing else does. Everything else is `text`, `textMuted`, `surface`, or `border`. Do not add more accent colors.
+- **Accent is used only for:** the streak badge, primary buttons (with `accentShade` as their lip), the active tab, progress bars, and the "done" checkmark. Confetti uses the `celebration` colours in `src/theme/tokens.ts`, and nothing else does. Everything else is `text`, `textMuted`, `surface`, or `border`. Do not add more accent colors: each palette has exactly one accent.
 - `danger` is for error text only (failed generation, invalid key).
 - `scrim` only dims the screen behind a `Dialog`.
 

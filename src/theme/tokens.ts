@@ -10,6 +10,7 @@ export interface ColorTokens {
   accentShade: string; // the pressable lip under primary buttons
   onAccent: string;
   danger: string;
+  scrim: string; // dims the screen behind a dialog
 }
 
 export type Scheme = 'light' | 'dark';
@@ -25,6 +26,7 @@ export const palette: Record<Scheme, ColorTokens> = {
     accentShade: '#14482F',
     onAccent: '#F7F6F2',
     danger: '#B3412F',
+    scrim: 'rgba(26, 31, 28, 0.45)',
   },
   dark: {
     background: '#121614',
@@ -36,6 +38,7 @@ export const palette: Record<Scheme, ColorTokens> = {
     accentShade: '#2F7A57',
     onAccent: '#0E1411',
     danger: '#E07A67',
+    scrim: 'rgba(8, 11, 9, 0.7)',
   },
 };
 

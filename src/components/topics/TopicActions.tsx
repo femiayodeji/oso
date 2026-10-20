@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { Alert, View } from 'react-native';
+import { View } from 'react-native';
 
 import { deleteTopic } from '../../db/topics';
 import { deleteSourceFile } from '../../llm/sourceText';
@@ -10,18 +10,12 @@ import { useTheme } from '../../theme';
 import type { Topic } from '../../types';
 import { AppText, ErrorText } from '../AppText';
 import { Button } from '../Button';
+import { useConfirm } from '../Dialog';
 import { goToSettings } from '../nav';
 import { errorMessage } from '../useFocusLoad';
 import { pickSourceFile, type PickedFile } from './topicData';
 
 const RESET_WARNING = 'This replaces the units, cards and sessions of this topic. Your streak is kept.';
-
-function confirm(title: string, message: string, action: string, onConfirm: () => void) {
-  Alert.alert(title, message, [
-    { text: 'Cancel', style: 'cancel' },
-    { text: action, style: 'destructive', onPress: onConfirm },
-  ]);
-}
 
 interface Props {
   topic: Topic;
@@ -31,6 +25,7 @@ interface Props {
 export function TopicActions({ topic, onChanged }: Props) {
   const { spacing } = useTheme();
   const [error, setError] = useState<string | null>(null);
+  const [dialog, confirm] = useConfirm();
 
   const regenerate = (file?: PickedFile) => {
     setError(null);
@@ -47,20 +42,32 @@ export function TopicActions({ topic, onChanged }: Props) {
     setError(null);
     try {
       const file = await pickSourceFile();
-      if (file) confirm(`Regenerate from ${file.name}?`, RESET_WARNING, 'Regenerate', () => regenerate(file));
+      if (file) {
+        confirm({
+          title: `Regenerate from ${file.name}?`,
+          message: RESET_WARNING,
+          action: 'Regenerate',
+          onConfirm: () => regenerate(file),
+        });
+      }
     } catch (e) {
       setError(errorMessage(e));
     }
   };
 
   const remove = () =>
-    confirm(`Delete ${topic.title}?`, 'Its units, cards and sessions are removed. Your streak is kept.', 'Delete', () => {
-      deleteTopic(topic.id)
-        .then(() => {
-          deleteSourceFile(topic.fileUri);
-          router.back();
-        })
-        .catch((e: unknown) => setError(errorMessage(e)));
+    confirm({
+      title: `Delete ${topic.title}?`,
+      message: 'Its units, cards and sessions are removed. Your streak is kept.',
+      action: 'Delete',
+      onConfirm: () => {
+        deleteTopic(topic.id)
+          .then(() => {
+            deleteSourceFile(topic.fileUri);
+            router.back();
+          })
+          .catch((e: unknown) => setError(errorMessage(e)));
+      },
     });
 
   // Busy only while work is really running: an interrupted topic (status 'generating',
@@ -81,9 +88,12 @@ export function TopicActions({ topic, onChanged }: Props) {
         label="Regenerate"
         variant="secondary"
         disabled={busy}
-        onPress={() => confirm('Regenerate this topic?', RESET_WARNING, 'Regenerate', () => regenerate())}
+        onPress={() =>
+          confirm({ title: 'Regenerate this topic?', message: RESET_WARNING, action: 'Regenerate', onConfirm: () => regenerate() })
+        }
       />
       <Button label="Delete topic" variant="quiet" disabled={busy} onPress={remove} />
+      {dialog}
     </View>
   );
 }

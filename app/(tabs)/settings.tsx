@@ -1,3 +1,5 @@
+import * as Linking from 'expo-linking';
+
 import { AppText } from '../../src/components/AppText';
 import { Button } from '../../src/components/Button';
 import { Chips } from '../../src/components/Chips';
@@ -14,6 +16,7 @@ import { getSettings } from '../../src/db/settings';
 import { providersWithKey } from '../../src/llm/apiKey';
 import { getPermissionStatus } from '../../src/notifications';
 import { useSettings } from '../../src/settings/SettingsContext';
+import { useTheme } from '../../src/theme';
 import type { ColorSchemeSetting } from '../../src/types';
 
 const APPEARANCE: { value: ColorSchemeSetting; label: string }[] = [
@@ -21,6 +24,8 @@ const APPEARANCE: { value: ColorSchemeSetting; label: string }[] = [
   { value: 'light', label: 'Light' },
   { value: 'dark', label: 'Dark' },
 ];
+
+const CREDIT_URL = 'https://femiayodeji.github.io/';
 
 const SOUNDS = [
   { value: 'on', label: 'On' },
@@ -41,6 +46,7 @@ async function loadSettingsScreen() {
 
 export default function SettingsScreen() {
   const { settings, update } = useSettings();
+  const { spacing } = useTheme();
   const { data, loading, error, reload } = useFocusLoad(loadSettingsScreen);
 
   // useFocusLoad also reloads when the app returns to the foreground, which picks up a
@@ -81,8 +87,19 @@ export default function SettingsScreen() {
       </Section>
 
       <AppText variant="caption">{`Best streak: ${data.bestStreak}`}</AppText>
-      <AppText variant="caption" center style={{ paddingTop: 24 }}>
+      <AppText variant="caption" center style={{ paddingTop: spacing.xl }}>
         Better books. A calmer mind.
+      </AppText>
+      <AppText variant="caption" center>
+        Made by{' '}
+        <AppText
+          variant="caption"
+          accessibilityRole="link"
+          onPress={() => void Linking.openURL(CREDIT_URL).catch(() => {})}
+          style={{ textDecorationLine: 'underline' }}
+        >
+          oluwainstincts
+        </AppText>
       </AppText>
     </Screen>
   );

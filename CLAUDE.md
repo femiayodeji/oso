@@ -163,6 +163,7 @@ Local scheduled notifications only. No push server.
 - Text-only cards, one idea per card, generous whitespace, **one readable font**, vertical swipe feed.
 - Neutral background, **dark mode** support, **one accent color**.
 - Streak: small number and icon in a corner; the flame jumps when the streak goes up. Finishing a session or topic shows confetti and a popping checkmark. No popups or modals for celebrations.
+- Confirmations (delete, regenerate) use the themed `Dialog` (`src/components/Dialog.tsx`, via `useConfirm()`), never native `Alert`.
 - Mascot (panda) appears in empty states and chat, with a gentle idle float. No wizard theming in the UI.
 - Recall cards: show the question, tap to reveal the answer.
 - Quiz cards: tap an option. Right: it turns `accent` and pops. Wrong: it shakes in `danger` and the right one is shown. The explanation follows.
@@ -203,11 +204,13 @@ Define all colors once as tokens. Components never use raw hex values.
 | `accentShade` | `#14482F` | `#2F7A57` |
 | `onAccent` | `#F7F6F2` | `#0E1411` |
 | `danger` | `#B3412F` | `#E07A67` |
+| `scrim` | `rgba(26,31,28,0.45)` | `rgba(8,11,9,0.7)` |
 
 - Follow the system color scheme by default. Manual override lives in Settings.
 - **Never use pure white or pure black** as a background.
 - **Accent is used only for:** the streak badge, primary buttons (with `accentShade` as their lip), the active tab, progress bars, and the "done" checkmark. Confetti uses the `celebration` colours in `src/theme/tokens.ts`, and nothing else does. Everything else is `text`, `textMuted`, `surface`, or `border`. Do not add more accent colors.
 - `danger` is for error text only (failed generation, invalid key).
+- `scrim` only dims the screen behind a `Dialog`.
 
 ### Typography
 

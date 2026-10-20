@@ -26,7 +26,7 @@ Personal-use mobile app for habitual learning: type anything you want to learn (
 ## Product model
 
 - **Topic**: anything the user wants to learn, typed as free text ("Stoicism", "How TCP works", "Atomic Habits"). The outline call decides whether it is a **book** the model knows (units are its real chapters) or an open **topic** (the model designs a syllabus). It also returns a clean title, a book's author, and an **icon** from a fixed list (`src/topic/icons.ts`). Source material is **optional**:
-  - `model_knowledge`: no file; the LLM generates from what it knows. Show a small "generated from model knowledge" label.
+  - `model_knowledge`: no file; the LLM generates from what it knows. Show a small "generated from model knowledge" label on the topic screen (not in the reading view, where it can't be acted on).
   - `uploaded`: user supplies a file or pasted text; unit text is included as context in prompts. (No vector DB or embeddings. Send the relevant unit as context.)
 - **Plan length**: 3 days / 1 week / 2 weeks / 1 month, chosen when adding and stored as `plan_days` **before generation**. It sizes the content (`src/plan/budget.ts`): budget = days × 10 cards, so a session is about **10 new cards (cap 12) plus at most 5 reviews**, about 5 minutes. Open topics get about one unit per 8 cards; each unit gets its share (3 to 12 cards). A book keeps its chapters; if they can't fit 12 cards a day the plan is stretched and the topic screen says so. Why: `docs/learning-science.md`. `depth` (`src/topic/depth.ts`) is legacy, only for topics without `plan_days`.
 - **Unit**: one section of a topic (a book chapter, or one step of a syllabus) with a summary.

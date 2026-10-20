@@ -157,8 +157,9 @@ export default function TodayScreen() {
             </View>
           </View>
           {!picked && nextSessions.length > 1 ? (
-            <View style={{ paddingTop: spacing.sm }}>
+            <View style={{ paddingTop: spacing.sm, marginHorizontal: -spacing.xl }}>
               <Chips
+                scroll
                 label="Topic"
                 value={active.topicId}
                 onChange={setTopicId}

@@ -154,10 +154,7 @@ export default function TodayScreen() {
             <View style={{ flex: 1, minWidth: 0 }}>
               {/* Full names, wrapping: a cut-off topic or module name hides where you are. */}
               <AppText variant="bodyStrong">{active.topicTitle}</AppText>
-              <AppText variant="caption">
-                {active.retake ? `Retake  ·  ${active.title}` : active.title}
-                {activeTopic?.source === 'model_knowledge' ? '  ·  model knowledge' : ''}
-              </AppText>
+              <AppText variant="caption">{active.retake ? `Retake  ·  ${active.title}` : active.title}</AppText>
             </View>
           </View>
           {!picked && nextSessions.length > 1 ? (

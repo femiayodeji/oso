@@ -5,6 +5,7 @@ import { View } from 'react-native';
 import { AppText } from '../../src/components/AppText';
 import { Chips } from '../../src/components/Chips';
 import { EmptyState } from '../../src/components/EmptyState';
+import { Confetti } from '../../src/components/motion/Confetti';
 import { goToChat } from '../../src/components/nav';
 import { ErrorLine, LoadingLine, Screen } from '../../src/components/Screen';
 import { SessionFeed } from '../../src/components/today/SessionFeed';
@@ -36,6 +37,8 @@ export default function TodayScreen() {
   const [recap, setRecap] = useState<Recap | null>(null);
   // Set when a session was just finished here, so the next screen celebrates once.
   const [celebrate, setCelebrate] = useState(false);
+  // Bumped when a retake is finished: a burst of confetti over whatever Today shows next.
+  const [retakeBurst, setRetakeBurst] = useState(0);
 
   useEffect(() => subscribeGeneration(() => void reload()), [reload]);
 
@@ -70,7 +73,8 @@ export default function TodayScreen() {
         setPicked((current) => {
           if (!current || current.id !== pickedId) return current;
           if (!session) return null;
-          return session.title === current.title && session.topicId === current.topicId ? current : session;
+          const same = session.title === current.title && session.topicId === current.topicId;
+          return same && session.retake === current.retake ? current : session;
         });
       })
       .catch(() => {});
@@ -80,9 +84,10 @@ export default function TodayScreen() {
   }, [data, pickedId]);
 
   // Whatever topic is being read becomes the one Today opens on next time, whether it was
-  // chosen with the chips or opened from the topic screen.
+  // chosen with the chips or opened from the topic screen. A retake leaves that choice alone.
   const next = data ? nextFor(data, topicId) : undefined;
-  const readingTopicId = picked?.topicId ?? (data && next && (!data.streak.doneToday || readAhead) ? next.topicId : null);
+  const nextReading = data && next && (!data.streak.doneToday || readAhead) ? next.topicId : null;
+  const readingTopicId = picked ? (picked.retake ? null : picked.topicId) : nextReading;
   useEffect(() => {
     if (readingTopicId == null) return;
     setTopicId(readingTopicId);
@@ -103,6 +108,13 @@ export default function TodayScreen() {
 
   const onCompleted = async (topicFinished: boolean) => {
     const done = active;
+    // A retake records nothing, so Today goes back to what it showed before, with a light burst.
+    if (done?.retake) {
+      setPicked(null);
+      setRetakeBurst((n) => n + 1);
+      await reload();
+      return;
+    }
     setPicked(null);
     setReadAhead(false);
     setReviewing(false);
@@ -144,7 +156,7 @@ export default function TodayScreen() {
                 {active.topicTitle}
               </AppText>
               <AppText variant="caption" numberOfLines={1}>
-                {active.title}
+                {active.retake ? `Retake  ·  ${active.title}` : active.title}
                 {activeTopic?.source === 'model_knowledge' ? '  ·  model knowledge' : ''}
               </AppText>
             </View>
@@ -197,6 +209,7 @@ export default function TodayScreen() {
     <Screen padded={false}>
       <TodayHeader streak={streak.current} onChat={chatTopicId != null ? () => goToChat(chatTopicId) : undefined} />
       {body}
+      {retakeBurst > 0 ? <Confetti key={retakeBurst} /> : null}
     </Screen>
   );
 }

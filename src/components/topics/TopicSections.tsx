@@ -33,7 +33,7 @@ interface SessionPoolProps {
   onOpen: (session: Session) => void;
 }
 
-// Ordered pool. Completed sessions are checked and inert; incomplete ones open in Today.
+// Ordered pool. Every session opens in Today; a completed one opens as a retake.
 export function SessionPool({ sessions, onOpen }: SessionPoolProps) {
   const { colors, spacing } = useTheme();
   return (
@@ -43,9 +43,8 @@ export function SessionPool({ sessions, onOpen }: SessionPoolProps) {
         return (
           <Pressable
             key={session.id}
-            disabled={done}
             accessibilityRole="button"
-            accessibilityLabel={done ? `${session.title}, done` : `Read ${session.title}`}
+            accessibilityLabel={done ? `${session.title}, done. Read again` : `Read ${session.title}`}
             onPress={() => onOpen(session)}
             style={({ pressed }) => [styles.session, { gap: spacing.md, opacity: pressed ? 0.6 : 1 }]}
           >
@@ -57,7 +56,7 @@ export function SessionPool({ sessions, onOpen }: SessionPoolProps) {
             <AppText variant="body" color={done ? 'textMuted' : 'text'} style={styles.title}>
               {session.title}
             </AppText>
-            {done ? null : <Ionicons name="chevron-forward" size={16} color={colors.textMuted} />}
+            <Ionicons name={done ? 'refresh' : 'chevron-forward'} size={16} color={colors.textMuted} />
           </Pressable>
         );
       })}

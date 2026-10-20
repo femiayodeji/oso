@@ -13,6 +13,8 @@ export interface ActiveSession {
   topicId: number;
   title: string;
   topicTitle: string;
+  // Re-reading a completed session: nothing it does is recorded.
+  retake?: boolean;
 }
 
 export const REVIEW_LABEL = 'Review due cards';
@@ -50,13 +52,14 @@ export async function loadToday(): Promise<TodayData> {
   return { hasKey, topics, nextSessions, streak, preparing, hasDueReviews: due.length > 0, lastTopicId };
 }
 
-// A session opened from the topic screen. Completed or missing sessions are ignored.
+// A session opened from the topic screen. A completed one opens as a retake.
 export async function loadSessionById(sessionId: number): Promise<ActiveSession | null> {
   const session = await getSession(sessionId);
-  if (!session || session.completedAt) return null;
+  if (!session) return null;
   const topic = await getTopic(session.topicId);
   if (!topic) return null;
-  return { id: session.id, topicId: session.topicId, title: session.title, topicTitle: topic.title };
+  const retake = session.completedAt != null;
+  return { id: session.id, topicId: session.topicId, title: session.title, topicTitle: topic.title, retake };
 }
 
 export async function loadRecap(topicId: number, topicTitle: string): Promise<Recap> {

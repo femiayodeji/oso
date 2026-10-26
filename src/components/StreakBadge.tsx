@@ -8,7 +8,8 @@ import { useReduceMotion } from './motion/useReduceMotion';
 
 // Flame plus number on a small accent tile, as on the brand sheet; the full panda is never shown for the streak.
 // When the count goes up, the flame jumps and wiggles and the number pops.
-export function StreakBadge({ count }: { count: number }) {
+// Until a session is done today the tile is greyed out, so the day's goal shows at a glance.
+export function StreakBadge({ count, active }: { count: number; active: boolean }) {
   const { colors, radius, spacing } = useTheme();
   const reduce = useReduceMotion();
   const previous = useRef(count);
@@ -35,25 +36,26 @@ export function StreakBadge({ count }: { count: number }) {
       { rotate: jump.interpolate({ inputRange: [0, 0.5, 1], outputRange: ['0deg', '-12deg', '10deg'] }) },
     ],
   };
+  const fg = active ? 'onAccent' : 'textMuted';
   const number = { transform: [{ scale: jump.interpolate({ inputRange: [0, 1], outputRange: [1, 1.35] }) }] };
 
   return (
     <View
       accessible
-      accessibilityLabel={`Streak: ${count} ${count === 1 ? 'day' : 'days'}`}
+      accessibilityLabel={`Streak: ${count} ${count === 1 ? 'day' : 'days'}${active ? '' : ', not done today'}`}
       style={styles.hit}
     >
       <View
         style={[
           styles.badge,
-          { gap: spacing.xs, backgroundColor: colors.accent, borderRadius: radius.sm, paddingHorizontal: spacing.sm },
+          { gap: spacing.xs, backgroundColor: active ? colors.accent : colors.border, borderRadius: radius.sm, paddingHorizontal: spacing.sm },
         ]}
       >
         <Animated.View style={flame}>
-          <Ionicons name="flame" size={18} color={colors.onAccent} />
+          <Ionicons name="flame" size={18} color={colors[fg]} />
         </Animated.View>
         <Animated.View style={number}>
-          <AppText variant="body" color="onAccent" style={{ fontFamily: fonts.bold }}>
+          <AppText variant="body" color={fg} style={{ fontFamily: fonts.bold }}>
             {count}
           </AppText>
         </Animated.View>

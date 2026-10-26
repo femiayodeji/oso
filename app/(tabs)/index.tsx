@@ -204,7 +204,7 @@ export default function TodayScreen() {
 
   return (
     <Screen padded={false}>
-      <TodayHeader streak={streak.current} onChat={chatTopicId != null ? () => goToChat(chatTopicId) : undefined} />
+      <TodayHeader streak={streak.current} doneToday={streak.doneToday} onChat={chatTopicId != null ? () => goToChat(chatTopicId) : undefined} />
       {body}
       {retakeBurst > 0 ? <Confetti key={retakeBurst} /> : null}
     </Screen>

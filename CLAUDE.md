@@ -158,13 +158,14 @@ Local scheduled notifications only. No push server.
 - No background jobs. They are unreliable on mobile and Android OEM skins.
 - Known limit: copy is fixed at schedule time, so after skipping days without opening the app, reminder copy may be stale until the next open. Acceptable.
 - Android battery optimization (Xiaomi, Tecno, Infinix) can delay notifications. Test on the real device early.
+- Known limit: a reminder whose time passes while the phone is off is dropped, not delivered late. expo-notifications re-arms only future reminders on boot, and some OEMs (Tecno, Infinix, Xiaomi) block that boot receiver unless the app has Auto-start enabled. The next app open resyncs.
 
 ## UI rules
 
 - **Three screens**: Today (feed), Topics, Settings. Chat opens from one button.
 - Text-only cards, one idea per card, generous whitespace, **one readable font**, vertical swipe feed.
 - Neutral background, **dark mode** and a warm **Reading** style, **one accent color** per palette.
-- Streak: small number and icon in a corner; the flame jumps when the streak goes up. Finishing a session or topic shows confetti and a popping checkmark. No popups or modals for celebrations.
+- Streak: small number and icon in a corner, greyed out (`border` tile, `textMuted` flame and number) until a session is done today; the flame jumps when the streak goes up. Finishing a session or topic shows confetti and a popping checkmark. No popups or modals for celebrations.
 - Confirmations (delete, regenerate) use the themed `Dialog` (`src/components/Dialog.tsx`, via `useConfirm()`), never native `Alert`.
 - Mascot (panda) appears in empty states and chat, with a gentle idle float. No wizard theming in the UI.
 - Recall cards: show the question, tap to reveal the answer.

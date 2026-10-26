@@ -8,10 +8,11 @@ import { StreakBadge } from '../StreakBadge';
 
 interface Props {
   streak: number;
+  doneToday: boolean;
   onChat?: () => void;
 }
 
-export function TodayHeader({ streak, onChat }: Props) {
+export function TodayHeader({ streak, doneToday, onChat }: Props) {
   const { spacing } = useTheme();
   return (
     <View style={[styles.row, { paddingHorizontal: spacing.xl, paddingTop: spacing.sm }]}>
@@ -23,7 +24,7 @@ export function TodayHeader({ streak, onChat }: Props) {
       </View>
       <View style={[styles.brand, { gap: spacing.sm }]}>
         {onChat ? <IconButton icon="chatbubble-outline" label="Open chat" onPress={onChat} /> : null}
-        <StreakBadge count={streak} />
+        <StreakBadge count={streak} active={doneToday} />
       </View>
     </View>
   );

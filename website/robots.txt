@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://oso.vercel.app/sitemap.xml
+Sitemap: https://oso-panda.vercel.app/sitemap.xml

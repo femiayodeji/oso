@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Site URL: https://oso.vercel.app (replace everywhere if your domain differs) -->
+  <title>Oso: Read more. Scroll less.</title>
+  <meta name="description" content="Type anything you want to learn. Oso turns it into five minutes of bite-size cards a day. Free for Android. No account, no tracking.">
+  <meta name="application-name" content="Oso">
+  <meta name="author" content="Oso">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://oso.vercel.app/">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F7F6F2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121614" media="(prefers-color-scheme: dark)">
+
+  <!-- Share card: Open Graph (WhatsApp, Facebook, LinkedIn, Slack, Discord, iMessage) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Oso">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:url" content="https://oso.vercel.app/">
+  <meta property="og:title" content="Oso: Read more. Scroll less.">
+  <meta property="og:description" content="Swap doom-scrolling for five minutes of learning a day. Free for Android.">
+  <meta property="og:image" content="https://oso.vercel.app/assets/og.png">
+  <meta property="og:image:secure_url" content="https://oso.vercel.app/assets/og.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Oso the panda reading a book, next to the words Read more. Scroll less.">
+
+  <!-- Share card: X / Twitter -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Oso: Read more. Scroll less.">
+  <meta name="twitter:description" content="Swap doom-scrolling for five minutes of learning a day. Free for Android.">
+  <meta name="twitter:image" content="https://oso.vercel.app/assets/og.png">
+  <meta name="twitter:image:alt" content="Oso the panda reading a book, next to the words Read more. Scroll less.">
+
+  <!-- Icons and install -->
+  <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <meta name="apple-mobile-web-app-title" content="Oso">
+
+  <!-- Search engines: app details -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "MobileApplication",
+    "name": "Oso",
+    "url": "https://oso.vercel.app/",
+    "image": "https://oso.vercel.app/assets/og.png",
+    "description": "Type anything you want to learn. Oso turns it into five minutes of bite-size cards a day.",
+    "operatingSystem": "Android 7.0+",
+    "applicationCategory": "EducationalApplication",
+    "softwareVersion": "1.0.0",
+    "fileSize": "48MB",
+    "downloadUrl": "https://github.com/femiayodeji/oso/releases/latest/download/oso.apk",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+  <link rel="preload" href="/assets/fonts/Nunito-ExtraBold.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="bar">
+    <a class="brand" href="#top" aria-label="Oso home">
+      <img src="/assets/mascot/pandaIcon.png" srcset="/assets/mascot/pandaIcon@2x.png 2x, /assets/mascot/pandaIcon@3x.png 3x" width="32" height="32" alt="">
+      <span>Oso</span>
+    </a>
+    <nav class="links" aria-label="Sections">
+      <a href="#setup">Setup</a>
+      <a href="#providers">AI keys</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <a class="btn btn-sm" href="https://github.com/femiayodeji/oso/releases/latest/download/oso.apk">Get the app</a>
+  </header>
+
+  <main id="top">
+    <!-- Hero -->
+    <section class="hero wrap">
+      <div class="hero-copy">
+        <p class="eyebrow">For Android</p>
+        <h1>Read more.<br>Scroll less.</h1>
+        <p class="lead">Type anything you want to learn. Oso turns it into five minutes of bite-size cards a day.</p>
+        <div class="cta">
+          <a class="btn" href="https://github.com/femiayodeji/oso/releases/latest/download/oso.apk">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+            Download APK
+          </a>
+          <a class="btn btn-ghost" href="#setup">How to install</a>
+        </div>
+        <p class="meta">v1.0.0 · 48 MB · Android 7+ · Free</p>
+      </div>
+      <div class="hero-art">
+        <div class="stage stage-lg">
+          <img class="float" src="/assets/mascot/reading@2x.png" srcset="/assets/mascot/reading@2x.png 1x, /assets/mascot/reading@3x.png 1.5x" width="280" height="280" alt="Oso the panda reading a green book">
+        </div>
+      </div>
+    </section>
+
+    <!-- Try a card -->
+    <section class="try wrap" aria-labelledby="try-title">
+      <div class="try-copy">
+        <h2 id="try-title">One idea per card.</h2>
+        <p>Short hooks, key ideas, and quick quizzes so it sticks. Give this one a go.</p>
+      </div>
+      <div class="phone" aria-label="Sample Oso card">
+        <div class="phone-top">
+          <span class="chip">Stoicism · Day 2</span>
+          <span class="streak" id="streak" aria-label="Streak 6 days">
+            <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3-1-3 0-6 1-9.5Z"/></svg>
+            <b id="streak-n">6</b>
+          </span>
+        </div>
+        <div class="progress"><span id="progress"></span></div>
+        <div class="card">
+          <p class="card-type">Quiz</p>
+          <p class="card-front">Epictetus said we should spend our energy on…</p>
+          <div class="options" role="group" aria-label="Answers">
+            <button class="opt" type="button">What others think of us</button>
+            <button class="opt" type="button" data-right>What is within our control</button>
+            <button class="opt" type="button">Planning for every outcome</button>
+          </div>
+          <p class="why" id="why" hidden>Right. Opinions, events and other people are outside our control. Our judgments and actions are ours.</p>
+        </div>
+        <div class="confetti" id="confetti" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="wrap" aria-labelledby="how-title">
+      <h2 id="how-title" class="center">Learning that fits in a coffee break.</h2>
+      <ul class="features">
+        <li>
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></svg></span>
+          <h3>Type anything</h3>
+          <p>A topic, a skill, a question, or a book. Add your own PDF or notes if you like.</p>
+        </li>
+        <li>
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M8 3v3m8-3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/></svg></span>
+          <h3>Pick a pace</h3>
+          <p>3 days to a month. About ten cards a day, around five minutes.</p>
+        </li>
+        <li>
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 2c1 4 5 6 5 11a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3-1-3 0-6 1-9.5Z"/></svg></span>
+          <h3>Keep the streak</h3>
+          <p>Miss a day, no drama. Old cards come back right before you'd forget them.</p>
+        </li>
+        <li>
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z"/></svg></span>
+          <h3>Yours only</h3>
+          <p>No account, no tracking. Everything stays on your phone and works offline.</p>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Setup -->
+    <section id="setup" class="band" aria-labelledby="setup-title">
+      <div class="wrap">
+        <div class="section-head">
+          <div class="stage stage-sm"><img class="float" src="/assets/mascot/chat.png" srcset="/assets/mascot/chat@2x.png 2x, /assets/mascot/chat@3x.png 3x" width="140" height="140" alt=""></div>
+          <div>
+            <h2 id="setup-title">Set up in 3 minutes.</h2>
+            <p>Oso isn't on the Play Store, so you install it straight from here.</p>
+          </div>
+        </div>
+        <ol class="steps">
+          <li>
+            <h3>Download</h3>
+            <p>Tap <a href="https://github.com/femiayodeji/oso/releases/latest/download/oso.apk">Download APK</a> on your phone.</p>
+          </li>
+          <li>
+            <h3>Install</h3>
+            <p>Open the file. If Android asks, allow installs from your browser, then tap <b>Install</b>.</p>
+            <p class="hint">Play Protect may say “unknown app”. Tap <b>More details → Install anyway</b>.</p>
+          </li>
+          <li>
+            <h3>Add an AI key</h3>
+            <p>Open <b>Settings</b>, pick a provider, paste your key, tap <b>Test connection</b>.</p>
+            <p class="hint">No key yet? <a href="#providers">Get a free one</a>.</p>
+          </li>
+          <li>
+            <h3>Start learning</h3>
+            <p>Type a topic, choose how long, tap <b>Start learning</b>. Your first cards are ready in a minute or two.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Providers -->
+    <section id="providers" class="wrap" aria-labelledby="prov-title">
+      <div class="section-head">
+        <div class="stage stage-sm"><img class="float" src="/assets/mascot/thinking.png" srcset="/assets/mascot/thinking@2x.png 2x, /assets/mascot/thinking@3x.png 3x" width="140" height="140" alt=""></div>
+        <div>
+          <h2 id="prov-title">Pick your AI.</h2>
+          <p>Oso writes your cards with an AI you choose. Bring a key; it stays on your phone.</p>
+        </div>
+      </div>
+
+      <div class="tabs" role="tablist" aria-label="Providers">
+        <button role="tab" id="t-openrouter" aria-controls="p-openrouter" aria-selected="true">OpenRouter</button>
+        <button role="tab" id="t-gemini" aria-controls="p-gemini" aria-selected="false" tabindex="-1">Gemini</button>
+        <button role="tab" id="t-groq" aria-controls="p-groq" aria-selected="false" tabindex="-1">Groq</button>
+        <button role="tab" id="t-anthropic" aria-controls="p-anthropic" aria-selected="false" tabindex="-1">Anthropic</button>
+        <button role="tab" id="t-openai" aria-controls="p-openai" aria-selected="false" tabindex="-1">OpenAI</button>
+      </div>
+
+      <div class="panel" role="tabpanel" id="p-openrouter" aria-labelledby="t-openrouter">
+        <div class="panel-head"><h3>OpenRouter</h3><span class="tag tag-free">Free · Best start</span></div>
+        <p>One key, hundreds of models. The default picks a free one for you.</p>
+        <ol class="mini">
+          <li>Sign in at <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener">openrouter.ai</a></li>
+          <li>Tap <b>Create key</b> and copy it</li>
+          <li>Paste it in Oso under <b>OpenRouter</b></li>
+        </ol>
+        <p class="model">Default model <code>openrouter/free</code></p>
+        <p class="hint">Free models have daily limits. Add a few dollars of credit for faster, paid models.</p>
+      </div>
+
+      <div class="panel" role="tabpanel" id="p-gemini" aria-labelledby="t-gemini" hidden>
+        <div class="panel-head"><h3>Gemini</h3><span class="tag tag-free">Free tier</span></div>
+        <p>Google's models. A generous free tier with just a Google account.</p>
+        <ol class="mini">
+          <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a></li>
+          <li>Tap <b>Create API key</b> and copy it</li>
+          <li>Paste it in Oso under <b>Gemini</b></li>
+        </ol>
+        <p class="model">Default model <code>gemini-flash-latest</code></p>
+        <p class="hint">On the free tier, Google may use your prompts to improve its products.</p>
+      </div>
+
+      <div class="panel" role="tabpanel" id="p-groq" aria-labelledby="t-groq" hidden>
+        <div class="panel-head"><h3>Groq</h3><span class="tag tag-free">Free tier</span></div>
+        <p>Very fast open models. Topics get ready in seconds.</p>
+        <ol class="mini">
+          <li>Sign in at <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com</a></li>
+          <li>Tap <b>Create API Key</b> and copy it</li>
+          <li>Paste it in Oso under <b>Groq</b></li>
+        </ol>
+        <p class="model">Default model <code>openai/gpt-oss-120b</code></p>
+        <p class="hint">Free limits are per minute. If you hit one, wait a moment and tap Retry.</p>
+      </div>
+
+      <div class="panel" role="tabpanel" id="p-anthropic" aria-labelledby="t-anthropic" hidden>
+        <div class="panel-head"><h3>Anthropic</h3><span class="tag">Paid</span></div>
+        <p>Claude models. Clear, careful writing.</p>
+        <ol class="mini">
+          <li>Sign in at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a></li>
+          <li>Add credit, then <b>Create Key</b></li>
+          <li>Paste it in Oso under <b>Anthropic</b></li>
+        </ol>
+        <p class="model">Default model <code>claude-haiku-5-5</code></p>
+        <p class="hint">You pay per use. Oso caches prompts to keep the bill small.</p>
+      </div>
+
+      <div class="panel" role="tabpanel" id="p-openai" aria-labelledby="t-openai" hidden>
+        <div class="panel-head"><h3>OpenAI</h3><span class="tag">Paid</span></div>
+        <p>GPT models from the makers of ChatGPT.</p>
+        <ol class="mini">
+          <li>Sign in at <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">platform.openai.com</a></li>
+          <li>Add credit, then <b>Create new secret key</b></li>
+          <li>Paste it in Oso under <b>OpenAI</b></li>
+        </ol>
+        <p class="model">Default model <code>gpt-6.1-sol</code></p>
+        <p class="hint">A ChatGPT subscription doesn't include API use. Billing is separate.</p>
+      </div>
+
+      <ul class="tips">
+        <li>Change provider or model any time in Settings. Each keeps its own key.</li>
+        <li>Your key sits in Android's secure storage and only goes to that provider.</li>
+      </ul>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="band" aria-labelledby="faq-title">
+      <div class="wrap narrow">
+        <h2 id="faq-title" class="center">Questions</h2>
+        <div class="faq">
+          <details>
+            <summary>Is Oso free?</summary>
+            <p>Yes. With a free provider, you pay nothing. With a paid one, you pay them directly, per use.</p>
+          </details>
+          <details>
+            <summary>Where does my data go?</summary>
+            <p>Nowhere. Topics, cards and progress stay on your phone. The only thing sent out is the prompt to your AI provider when cards are written.</p>
+          </details>
+          <details>
+            <summary>Does it work offline?</summary>
+            <p>Yes, once a topic is ready. Only writing new cards needs internet.</p>
+          </details>
+          <details>
+            <summary>What if I miss a day?</summary>
+            <p>Your streak survives one missed day. Sessions aren't tied to dates, so nothing piles up.</p>
+          </details>
+          <details>
+            <summary>Is there an iPhone version?</summary>
+            <p>Not yet. Oso is Android only for now.</p>
+          </details>
+          <details>
+            <summary>Reminders don't show up.</summary>
+            <p>Some phones (Xiaomi, Tecno, Infinix) pause apps to save battery. Turn on <b>Auto-start</b> for Oso and set battery to <b>No restrictions</b>.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA -->
+    <section class="final wrap">
+      <div class="stage stage-md"><img class="float" src="/assets/mascot/happy@2x.png" srcset="/assets/mascot/happy@2x.png 1x, /assets/mascot/happy@3x.png 1.5x" width="200" height="200" alt="Oso the panda, happy"></div>
+      <h2>Your next five minutes, better spent.</h2>
+      <a class="btn" href="https://github.com/femiayodeji/oso/releases/latest/download/oso.apk">
+        <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m0 0-5-5m5 5 5-5M5 21h14"/></svg>
+        Download APK
+      </a>
+    </section>
+  </main>
+
+  <footer class="foot wrap">
+    <img src="/assets/mascot/pandaIcon.png" srcset="/assets/mascot/pandaIcon@2x.png 2x" width="24" height="24" alt="">
+    <span>Oso · Better books. A calmer mind.</span>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>

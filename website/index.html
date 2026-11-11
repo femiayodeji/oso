@@ -199,27 +199,15 @@
       </div>
 
       <div class="tabs" role="tablist" aria-label="Providers">
-        <button role="tab" id="t-openrouter" aria-controls="p-openrouter" aria-selected="true">OpenRouter</button>
-        <button role="tab" id="t-gemini" aria-controls="p-gemini" aria-selected="false" tabindex="-1">Gemini</button>
+        <button role="tab" id="t-gemini" aria-controls="p-gemini" aria-selected="true">Gemini</button>
+        <button role="tab" id="t-openrouter" aria-controls="p-openrouter" aria-selected="false" tabindex="-1">OpenRouter</button>
         <button role="tab" id="t-groq" aria-controls="p-groq" aria-selected="false" tabindex="-1">Groq</button>
         <button role="tab" id="t-anthropic" aria-controls="p-anthropic" aria-selected="false" tabindex="-1">Anthropic</button>
         <button role="tab" id="t-openai" aria-controls="p-openai" aria-selected="false" tabindex="-1">OpenAI</button>
       </div>
 
-      <div class="panel" role="tabpanel" id="p-openrouter" aria-labelledby="t-openrouter">
-        <div class="panel-head"><h3>OpenRouter</h3><span class="tag tag-free">Free · Best start</span></div>
-        <p>One key, hundreds of models. The default picks a free one for you.</p>
-        <ol class="mini">
-          <li>Sign in at <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener">openrouter.ai</a></li>
-          <li>Tap <b>Create key</b> and copy it</li>
-          <li>Paste it in Oso under <b>OpenRouter</b></li>
-        </ol>
-        <p class="model">Default model <code>openrouter/free</code></p>
-        <p class="hint">Free models have daily limits. Add a few dollars of credit for faster, paid models.</p>
-      </div>
-
-      <div class="panel" role="tabpanel" id="p-gemini" aria-labelledby="t-gemini" hidden>
-        <div class="panel-head"><h3>Gemini</h3><span class="tag tag-free">Free tier</span></div>
+      <div class="panel" role="tabpanel" id="p-gemini" aria-labelledby="t-gemini">
+        <div class="panel-head"><h3>Gemini</h3><span class="tag tag-free">Free · Best start</span></div>
         <p>Google's models. A generous free tier with just a Google account.</p>
         <ol class="mini">
           <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a></li>
@@ -228,6 +216,18 @@
         </ol>
         <p class="model">Default model <code>gemini-flash-latest</code></p>
         <p class="hint">On the free tier, Google may use your prompts to improve its products.</p>
+      </div>
+
+      <div class="panel" role="tabpanel" id="p-openrouter" aria-labelledby="t-openrouter" hidden>
+        <div class="panel-head"><h3>OpenRouter</h3><span class="tag tag-free">Free</span></div>
+        <p>One key, hundreds of models. The default picks a free one for you.</p>
+        <ol class="mini">
+          <li>Sign in at <a href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener">openrouter.ai</a></li>
+          <li>Tap <b>Create key</b> and copy it</li>
+          <li>Paste it in Oso under <b>OpenRouter</b></li>
+        </ol>
+        <p class="model">Default model <code>openrouter/free</code></p>
+        <p class="hint">Free models have daily limits. Add a few dollars of credit for faster, paid models.</p>
       </div>
 
       <div class="panel" role="tabpanel" id="p-groq" aria-labelledby="t-groq" hidden>
